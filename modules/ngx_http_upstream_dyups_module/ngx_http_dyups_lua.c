@@ -16,23 +16,24 @@ static int ngx_http_lua_delete_upstream(lua_State *L);
 static int
 ngx_http_lua_update_upstream(lua_State *L)
 {
-    size_t     size;
-    ngx_int_t  status;
-    ngx_str_t  name, rv;
-    ngx_buf_t  buf;
+    size_t    size;
+    ngx_int_t status;
+    ngx_str_t name, rv;
+    ngx_buf_t buf;
 
-    if (lua_gettop(L) != 2) {
+    if (lua_gettop(L) != 2)
+    {
         return luaL_error(L, "exactly 2 arguments expected");
     }
 
-    name.data = (u_char *) luaL_checklstring(L, 1, &name.len);
-    buf.pos = buf.start = (u_char *) luaL_checklstring(L, 2, &size);
+    name.data = (u_char *)luaL_checklstring(L, 1, &name.len);
+    buf.pos = buf.start = (u_char *)luaL_checklstring(L, 2, &size);
     buf.last = buf.end = buf.pos + size;
 
     status = ngx_dyups_update_upstream(&name, &buf, &rv);
 
-    lua_pushinteger(L, (lua_Integer) status);
-    lua_pushlstring(L, (char *) rv.data, rv.len);
+    lua_pushinteger(L, (lua_Integer)status);
+    lua_pushlstring(L, (char *)rv.data, rv.len);
 
     return 2;
 }
@@ -41,19 +42,20 @@ ngx_http_lua_update_upstream(lua_State *L)
 static int
 ngx_http_lua_delete_upstream(lua_State *L)
 {
-    ngx_int_t  status;
-    ngx_str_t  name, rv;
+    ngx_int_t status;
+    ngx_str_t name, rv;
 
-    if (lua_gettop(L) != 1) {
+    if (lua_gettop(L) != 1)
+    {
         return luaL_error(L, "exactly 1 argument expected");
     }
 
-    name.data = (u_char *) luaL_checklstring(L, 1, &name.len);
+    name.data = (u_char *)luaL_checklstring(L, 1, &name.len);
 
     status = ngx_dyups_delete_upstream(&name, &rv);
 
-    lua_pushinteger(L, (lua_Integer) status);
-    lua_pushlstring(L, (char *) rv.data, rv.len);
+    lua_pushinteger(L, (lua_Integer)status);
+    lua_pushlstring(L, (char *)rv.data, rv.len);
 
     return 2;
 }

@@ -17,28 +17,32 @@
 ngx_queue_t *
 ngx_queue_middle(ngx_queue_t *queue)
 {
-    ngx_queue_t  *middle, *next;
+    ngx_queue_t *middle, *next;
 
     middle = ngx_queue_head(queue);
 
-    if (middle == ngx_queue_last(queue)) {
+    if (middle == ngx_queue_last(queue))
+    {
         return middle;
     }
 
     next = ngx_queue_head(queue);
 
-    for ( ;; ) {
+    for (;;)
+    {
         middle = ngx_queue_next(middle);
 
         next = ngx_queue_next(next);
 
-        if (next == ngx_queue_last(queue)) {
+        if (next == ngx_queue_last(queue))
+        {
             return middle;
         }
 
         next = ngx_queue_next(next);
 
-        if (next == ngx_queue_last(queue)) {
+        if (next == ngx_queue_last(queue))
+        {
             return middle;
         }
     }
@@ -49,25 +53,28 @@ ngx_queue_middle(ngx_queue_t *queue)
 
 void
 ngx_queue_sort(ngx_queue_t *queue,
-    ngx_int_t (*cmp)(const ngx_queue_t *, const ngx_queue_t *))
+               ngx_int_t (*cmp)(const ngx_queue_t *, const ngx_queue_t *))
 {
-    ngx_queue_t  *q, *prev, *next;
+    ngx_queue_t *q, *prev, *next;
 
     q = ngx_queue_head(queue);
 
-    if (q == ngx_queue_last(queue)) {
+    if (q == ngx_queue_last(queue))
+    {
         return;
     }
 
-    for (q = ngx_queue_next(q); q != ngx_queue_sentinel(queue); q = next) {
-
+    for (q = ngx_queue_next(q); q != ngx_queue_sentinel(queue); q = next)
+    {
         prev = ngx_queue_prev(q);
         next = ngx_queue_next(q);
 
         ngx_queue_remove(q);
 
-        do {
-            if (cmp(prev, q) <= 0) {
+        do
+        {
+            if (cmp(prev, q) <= 0)
+            {
                 break;
             }
 

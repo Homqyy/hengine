@@ -1463,3 +1463,5 @@ have=T_NGX_HTTP_IMPROVED_REWRITE . auto/have
 have=T_NGX_SHOW_INFO . auto/have
 have=T_NGX_HTTP_IMAGE_FILTER . auto/have
 have=T_NGX_HAVE_DTLS . auto/have
+
+have=H_NGX_SERVER_INFO . auto/have

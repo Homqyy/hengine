@@ -33,15 +33,17 @@ ngx_http_lua_atpanic(lua_State *L)
 #ifdef NGX_LUA_ABORT_AT_PANIC
     abort();
 #else
-    u_char                  *s = NULL;
-    size_t                   len = 0;
+    u_char *s   = NULL;
+    size_t  len = 0;
 
-    if (lua_type(L, -1) == LUA_TSTRING) {
-        s = (u_char *) lua_tolstring(L, -1, &len);
+    if (lua_type(L, -1) == LUA_TSTRING)
+    {
+        s = (u_char *)lua_tolstring(L, -1, &len);
     }
 
-    if (s == NULL) {
-        s = (u_char *) "unknown reason";
+    if (s == NULL)
+    {
+        s   = (u_char *)"unknown reason";
         len = sizeof("unknown reason") - 1;
     }
 

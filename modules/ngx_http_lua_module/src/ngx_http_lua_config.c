@@ -23,7 +23,7 @@ ngx_http_lua_inject_config_api(lua_State *L)
 {
     /* ngx.config */
 
-    lua_createtable(L, 0, 6 /* nrec */);    /* .config */
+    lua_createtable(L, 0, 6 /* nrec */); /* .config */
 
 #if (NGX_DEBUG)
     lua_pushboolean(L, 1);
@@ -54,8 +54,7 @@ ngx_http_lua_inject_config_api(lua_State *L)
 static int
 ngx_http_lua_config_prefix(lua_State *L)
 {
-    lua_pushlstring(L, (char *) ngx_cycle->prefix.data,
-                    ngx_cycle->prefix.len);
+    lua_pushlstring(L, (char *)ngx_cycle->prefix.data, ngx_cycle->prefix.len);
     return 1;
 }
 

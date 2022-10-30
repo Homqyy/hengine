@@ -17,20 +17,21 @@
 #include "ngx_http_lua_cache.h"
 
 
-static ngx_int_t ngx_http_lua_rewrite_by_chunk(lua_State *L,
-    ngx_http_request_t *r);
+static ngx_int_t ngx_http_lua_rewrite_by_chunk(lua_State          *L,
+                                               ngx_http_request_t *r);
 
 
 ngx_int_t
 ngx_http_lua_rewrite_handler(ngx_http_request_t *r)
 {
-    ngx_http_lua_loc_conf_t     *llcf;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_int_t                    rc;
-    ngx_http_lua_main_conf_t    *lmcf;
+    ngx_http_lua_loc_conf_t  *llcf;
+    ngx_http_lua_ctx_t       *ctx;
+    ngx_int_t                 rc;
+    ngx_http_lua_main_conf_t *lmcf;
 
     /* XXX we need to take into account ngx_rewrite's location dump */
-    if (r->uri_changed) {
+    if (r->uri_changed)
+    {
         return NGX_DECLINED;
     }
 
@@ -40,19 +41,20 @@ ngx_http_lua_rewrite_handler(ngx_http_request_t *r)
 
     lmcf = ngx_http_get_module_main_conf(r, ngx_http_lua_module);
 
-    if (!lmcf->postponed_to_rewrite_phase_end) {
-        ngx_http_core_main_conf_t       *cmcf;
-        ngx_http_phase_handler_t        tmp;
-        ngx_http_phase_handler_t        *ph;
-        ngx_http_phase_handler_t        *cur_ph;
-        ngx_http_phase_handler_t        *last_ph;
+    if (!lmcf->postponed_to_rewrite_phase_end)
+    {
+        ngx_http_core_main_conf_t *cmcf;
+        ngx_http_phase_handler_t   tmp;
+        ngx_http_phase_handler_t  *ph;
+        ngx_http_phase_handler_t  *cur_ph;
+        ngx_http_phase_handler_t  *last_ph;
 
         lmcf->postponed_to_rewrite_phase_end = 1;
 
         cmcf = ngx_http_get_module_main_conf(r, ngx_http_core_module);
 
-        ph = cmcf->phase_engine.handlers;
-        cur_ph = &ph[r->phase_handler];
+        ph      = cmcf->phase_engine.handlers;
+        cur_ph  = &ph[r->phase_handler];
         last_ph = &ph[cur_ph->next - 1];
 
 #if 0
@@ -61,13 +63,14 @@ ngx_http_lua_rewrite_handler(ngx_http_request_t *r)
         }
 #endif
 
-        if (cur_ph < last_ph) {
+        if (cur_ph < last_ph)
+        {
             dd("swapping the contents of cur_ph and last_ph...");
 
-            tmp      = *cur_ph;
+            tmp = *cur_ph;
 
             memmove(cur_ph, cur_ph + 1,
-                    (last_ph - cur_ph) * sizeof (ngx_http_phase_handler_t));
+                    (last_ph - cur_ph) * sizeof(ngx_http_phase_handler_t));
 
             *last_ph = tmp;
 
@@ -79,7 +82,8 @@ ngx_http_lua_rewrite_handler(ngx_http_request_t *r)
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
 
-    if (llcf->rewrite_handler == NULL) {
+    if (llcf->rewrite_handler == NULL)
+    {
         dd("no rewrite handler found");
         return NGX_DECLINED;
     }
@@ -88,38 +92,46 @@ ngx_http_lua_rewrite_handler(ngx_http_request_t *r)
 
     dd("ctx = %p", ctx);
 
-    if (ctx == NULL) {
+    if (ctx == NULL)
+    {
         ctx = ngx_http_lua_create_ctx(r);
-        if (ctx == NULL) {
+        if (ctx == NULL)
+        {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
     }
 
-    dd("entered? %d", (int) ctx->entered_rewrite_phase);
+    dd("entered? %d", (int)ctx->entered_rewrite_phase);
 
-    if (ctx->entered_rewrite_phase) {
+    if (ctx->entered_rewrite_phase)
+    {
         dd("rewriteby: calling wev handler");
         rc = ctx->resume_handler(r);
-        dd("rewriteby: wev handler returns %d", (int) rc);
+        dd("rewriteby: wev handler returns %d", (int)rc);
 
-        if (rc == NGX_OK) {
+        if (rc == NGX_OK)
+        {
             rc = NGX_DECLINED;
         }
 
-        if (rc == NGX_DECLINED) {
-            if (r->header_sent) {
+        if (rc == NGX_DECLINED)
+        {
+            if (r->header_sent)
+            {
                 dd("header already sent");
 
                 /* response header was already generated in rewrite_by_lua*,
                  * so it is no longer safe to proceed to later phases
                  * which may generate responses again */
 
-                if (!ctx->eof) {
+                if (!ctx->eof)
+                {
                     dd("eof not yet sent");
 
                     rc = ngx_http_lua_send_chain_link(r, ctx, NULL
-                                                     /* indicate last_buf */);
-                    if (rc == NGX_ERROR || rc > NGX_OK) {
+                                                      /* indicate last_buf */);
+                    if (rc == NGX_ERROR || rc > NGX_OK)
+                    {
                         return rc;
                     }
                 }
@@ -127,7 +139,7 @@ ngx_http_lua_rewrite_handler(ngx_http_request_t *r)
                 return NGX_HTTP_OK;
             }
 
-            r->write_event_handler = ngx_http_core_run_phases;
+            r->write_event_handler     = ngx_http_core_run_phases;
             ctx->entered_rewrite_phase = 0;
 
             return NGX_DECLINED;
@@ -136,28 +148,32 @@ ngx_http_lua_rewrite_handler(ngx_http_request_t *r)
         return rc;
     }
 
-    if (ctx->waiting_more_body) {
+    if (ctx->waiting_more_body)
+    {
         return NGX_DONE;
     }
 
-    if (llcf->force_read_body && !ctx->read_body_done) {
-        r->request_body_in_single_buf = 1;
+    if (llcf->force_read_body && !ctx->read_body_done)
+    {
+        r->request_body_in_single_buf      = 1;
         r->request_body_in_persistent_file = 1;
-        r->request_body_in_clean_file = 1;
+        r->request_body_in_clean_file      = 1;
 
-        rc = ngx_http_read_client_request_body(r,
-                                       ngx_http_lua_generic_phase_post_read);
+        rc = ngx_http_read_client_request_body(
+            r, ngx_http_lua_generic_phase_post_read);
 
-        if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
-#if (nginx_version < 1002006) ||                                             \
-        (nginx_version >= 1003000 && nginx_version < 1003009)
+        if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE)
+        {
+#if (nginx_version < 1002006) \
+    || (nginx_version >= 1003000 && nginx_version < 1003009)
             r->main->count--;
 #endif
 
             return rc;
         }
 
-        if (rc == NGX_AGAIN) {
+        if (rc == NGX_AGAIN)
+        {
             ctx->waiting_more_body = 1;
             return NGX_DONE;
         }
@@ -171,23 +187,22 @@ ngx_http_lua_rewrite_handler(ngx_http_request_t *r)
 ngx_int_t
 ngx_http_lua_rewrite_handler_inline(ngx_http_request_t *r)
 {
-    lua_State                   *L;
-    ngx_int_t                    rc;
-    ngx_http_lua_loc_conf_t     *llcf;
+    lua_State               *L;
+    ngx_int_t                rc;
+    ngx_http_lua_loc_conf_t *llcf;
 
     dd("rewrite by lua inline");
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
-    L = ngx_http_lua_get_lua_vm(r, NULL);
+    L    = ngx_http_lua_get_lua_vm(r, NULL);
 
     /*  load Lua inline script (w/ cache) sp = 1 */
-    rc = ngx_http_lua_cache_loadbuffer(r->connection->log, L,
-                                       llcf->rewrite_src.value.data,
-                                       llcf->rewrite_src.value.len,
-                                       llcf->rewrite_src_key,
-                                       (const char *)
-                                       llcf->rewrite_chunkname);
-    if (rc != NGX_OK) {
+    rc = ngx_http_lua_cache_loadbuffer(
+        r->connection->log, L, llcf->rewrite_src.value.data,
+        llcf->rewrite_src.value.len, llcf->rewrite_src_key,
+        (const char *)llcf->rewrite_chunkname);
+    if (rc != NGX_OK)
+    {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
@@ -198,22 +213,24 @@ ngx_http_lua_rewrite_handler_inline(ngx_http_request_t *r)
 ngx_int_t
 ngx_http_lua_rewrite_handler_file(ngx_http_request_t *r)
 {
-    lua_State                       *L;
-    ngx_int_t                        rc;
-    u_char                          *script_path;
-    ngx_http_lua_loc_conf_t         *llcf;
-    ngx_str_t                        eval_src;
+    lua_State               *L;
+    ngx_int_t                rc;
+    u_char                  *script_path;
+    ngx_http_lua_loc_conf_t *llcf;
+    ngx_str_t                eval_src;
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
 
-    if (ngx_http_complex_value(r, &llcf->rewrite_src, &eval_src) != NGX_OK) {
+    if (ngx_http_complex_value(r, &llcf->rewrite_src, &eval_src) != NGX_OK)
+    {
         return NGX_ERROR;
     }
 
-    script_path = ngx_http_lua_rebase_path(r->pool, eval_src.data,
-                                           eval_src.len);
+    script_path =
+        ngx_http_lua_rebase_path(r->pool, eval_src.data, eval_src.len);
 
-    if (script_path == NULL) {
+    if (script_path == NULL)
+    {
         return NGX_ERROR;
     }
 
@@ -222,8 +239,10 @@ ngx_http_lua_rewrite_handler_file(ngx_http_request_t *r)
     /*  load Lua script file (w/ cache)        sp = 1 */
     rc = ngx_http_lua_cache_loadfile(r->connection->log, L, script_path,
                                      llcf->rewrite_src_key);
-    if (rc != NGX_OK) {
-        if (rc < NGX_HTTP_SPECIAL_RESPONSE) {
+    if (rc != NGX_OK)
+    {
+        if (rc < NGX_HTTP_SPECIAL_RESPONSE)
+        {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
 
@@ -237,21 +256,22 @@ ngx_http_lua_rewrite_handler_file(ngx_http_request_t *r)
 static ngx_int_t
 ngx_http_lua_rewrite_by_chunk(lua_State *L, ngx_http_request_t *r)
 {
-    int                      co_ref;
-    lua_State               *co;
-    ngx_int_t                rc;
-    ngx_uint_t               nreqs;
-    ngx_event_t             *rev;
-    ngx_connection_t        *c;
-    ngx_http_lua_ctx_t      *ctx;
-    ngx_http_cleanup_t      *cln;
+    int                 co_ref;
+    lua_State          *co;
+    ngx_int_t           rc;
+    ngx_uint_t          nreqs;
+    ngx_event_t        *rev;
+    ngx_connection_t   *c;
+    ngx_http_lua_ctx_t *ctx;
+    ngx_http_cleanup_t *cln;
 
-    ngx_http_lua_loc_conf_t     *llcf;
+    ngx_http_lua_loc_conf_t *llcf;
 
     /*  {{{ new coroutine to handle request */
     co = ngx_http_lua_new_thread(r, L, &co_ref);
 
-    if (co == NULL) {
+    if (co == NULL)
+    {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "lua: failed to create new coroutine to handle request");
 
@@ -275,7 +295,8 @@ ngx_http_lua_rewrite_by_chunk(lua_State *L, ngx_http_request_t *r)
 
     dd("ctx = %p", ctx);
 
-    if (ctx == NULL) {
+    if (ctx == NULL)
+    {
         return NGX_ERROR;
     }
 
@@ -283,8 +304,8 @@ ngx_http_lua_rewrite_by_chunk(lua_State *L, ngx_http_request_t *r)
 
     ctx->entered_rewrite_phase = 1;
 
-    ctx->cur_co_ctx = &ctx->entry_co_ctx;
-    ctx->cur_co_ctx->co = co;
+    ctx->cur_co_ctx         = &ctx->entry_co_ctx;
+    ctx->cur_co_ctx->co     = co;
     ctx->cur_co_ctx->co_ref = co_ref;
 #ifdef NGX_LUA_USE_ASSERT
     ctx->cur_co_ctx->co_top = 1;
@@ -293,14 +314,16 @@ ngx_http_lua_rewrite_by_chunk(lua_State *L, ngx_http_request_t *r)
     /*  }}} */
 
     /*  {{{ register request cleanup hooks */
-    if (ctx->cleanup == NULL) {
+    if (ctx->cleanup == NULL)
+    {
         cln = ngx_http_cleanup_add(r, 0);
-        if (cln == NULL) {
+        if (cln == NULL)
+        {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
 
         cln->handler = ngx_http_lua_request_cleanup_handler;
-        cln->data = ctx;
+        cln->data    = ctx;
         ctx->cleanup = &cln->handler;
     }
     /*  }}} */
@@ -309,60 +332,72 @@ ngx_http_lua_rewrite_by_chunk(lua_State *L, ngx_http_request_t *r)
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
 
-    if (llcf->check_client_abort) {
+    if (llcf->check_client_abort)
+    {
         r->read_event_handler = ngx_http_lua_rd_check_broken_connection;
 
 #if (NGX_HTTP_V2)
-        if (!r->stream) {
+        if (!r->stream)
+        {
 #endif
 
-        rev = r->connection->read;
+            rev = r->connection->read;
 
-        if (!rev->active) {
-            if (ngx_add_event(rev, NGX_READ_EVENT, 0) != NGX_OK) {
-                return NGX_ERROR;
+            if (!rev->active)
+            {
+                if (ngx_add_event(rev, NGX_READ_EVENT, 0) != NGX_OK)
+                {
+                    return NGX_ERROR;
+                }
             }
-        }
 
 #if (NGX_HTTP_V2)
         }
 #endif
-
-    } else {
+    }
+    else
+    {
         r->read_event_handler = ngx_http_block_reading;
     }
 
-    c = r->connection;
+    c     = r->connection;
     nreqs = c->requests;
 
     rc = ngx_http_lua_run_thread(L, r, ctx, 0);
 
-    if (rc == NGX_ERROR || rc > NGX_OK) {
+    if (rc == NGX_ERROR || rc > NGX_OK)
+    {
         return rc;
     }
 
-    if (rc == NGX_AGAIN) {
+    if (rc == NGX_AGAIN)
+    {
         rc = ngx_http_lua_run_posted_threads(c, L, r, ctx, nreqs);
-
-    } else if (rc == NGX_DONE) {
+    }
+    else if (rc == NGX_DONE)
+    {
         ngx_http_lua_finalize_request(r, NGX_DONE);
         rc = ngx_http_lua_run_posted_threads(c, L, r, ctx, nreqs);
     }
 
-    if (rc == NGX_OK || rc == NGX_DECLINED) {
-        if (r->header_sent) {
+    if (rc == NGX_OK || rc == NGX_DECLINED)
+    {
+        if (r->header_sent)
+        {
             dd("header already sent");
 
             /* response header was already generated in rewrite_by_lua*,
              * so it is no longer safe to proceed to later phases
              * which may generate responses again */
 
-            if (!ctx->eof) {
+            if (!ctx->eof)
+            {
                 dd("eof not yet sent");
 
                 rc = ngx_http_lua_send_chain_link(r, ctx, NULL
                                                   /* indicate last_buf */);
-                if (rc == NGX_ERROR || rc > NGX_OK) {
+                if (rc == NGX_ERROR || rc > NGX_OK)
+                {
                     return rc;
                 }
             }
@@ -370,7 +405,7 @@ ngx_http_lua_rewrite_by_chunk(lua_State *L, ngx_http_request_t *r)
             return NGX_HTTP_OK;
         }
 
-        r->write_event_handler = ngx_http_core_run_phases;
+        r->write_event_handler     = ngx_http_core_run_phases;
         ctx->entered_rewrite_phase = 0;
 
         return NGX_DECLINED;

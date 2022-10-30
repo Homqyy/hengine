@@ -11,7 +11,7 @@
 
 
 static ssize_t ngx_linux_sendfile(ngx_connection_t *c, ngx_buf_t *file,
-    size_t size);
+                                  size_t size);
 
 #if (NGX_THREADS)
 #include <ngx_thread_pool.h>
@@ -21,8 +21,8 @@ static ssize_t ngx_linux_sendfile(ngx_connection_t *c, ngx_buf_t *file,
 #endif
 
 static ssize_t ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file,
-    size_t size);
-static void ngx_linux_sendfile_thread_handler(void *data, ngx_log_t *log);
+                                         size_t size);
+static void    ngx_linux_sendfile_thread_handler(void *data, ngx_log_t *log);
 #endif
 
 
@@ -40,50 +40,54 @@ static void ngx_linux_sendfile_thread_handler(void *data, ngx_log_t *log);
  * so we limit it to 2G-1 bytes.
  */
 
-#define NGX_SENDFILE_MAXSIZE  2147483647L
+#define NGX_SENDFILE_MAXSIZE 2147483647L
 
 
 ngx_chain_t *
 ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 {
-    int            tcp_nodelay;
-    off_t          send, prev_send;
-    size_t         file_size, sent;
-    ssize_t        n;
-    ngx_err_t      err;
-    ngx_buf_t     *file;
-    ngx_event_t   *wev;
-    ngx_chain_t   *cl;
-    ngx_iovec_t    header;
-    struct iovec   headers[NGX_IOVS_PREALLOCATE];
+    int          tcp_nodelay;
+    off_t        send, prev_send;
+    size_t       file_size, sent;
+    ssize_t      n;
+    ngx_err_t    err;
+    ngx_buf_t   *file;
+    ngx_event_t *wev;
+    ngx_chain_t *cl;
+    ngx_iovec_t  header;
+    struct iovec headers[NGX_IOVS_PREALLOCATE];
 
     wev = c->write;
 
-    if (!wev->ready) {
+    if (!wev->ready)
+    {
         return in;
     }
 
 
     /* the maximum limit size is 2G-1 - the page size */
 
-    if (limit == 0 || limit > (off_t) (NGX_SENDFILE_MAXSIZE - ngx_pagesize)) {
+    if (limit == 0 || limit > (off_t)(NGX_SENDFILE_MAXSIZE - ngx_pagesize))
+    {
         limit = NGX_SENDFILE_MAXSIZE - ngx_pagesize;
     }
 
 
     send = 0;
 
-    header.iovs = headers;
+    header.iovs   = headers;
     header.nalloc = NGX_IOVS_PREALLOCATE;
 
-    for ( ;; ) {
+    for (;;)
+    {
         prev_send = send;
 
         /* create the iovec and coalesce the neighbouring bufs */
 
         cl = ngx_output_chain_to_iovec(&header, in, limit - send, c->log);
 
-        if (cl == NGX_CHAIN_ERROR) {
+        if (cl == NGX_CHAIN_ERROR)
+        {
             return NGX_CHAIN_ERROR;
         }
 
@@ -91,19 +95,18 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 
         /* set TCP_CORK if there is a header before a file */
 
-        if (c->tcp_nopush == NGX_TCP_NOPUSH_UNSET
-            && header.count != 0
-            && cl
+        if (c->tcp_nopush == NGX_TCP_NOPUSH_UNSET && header.count != 0 && cl
             && cl->buf->in_file)
         {
             /* the TCP_CORK and TCP_NODELAY are mutually exclusive */
 
-            if (c->tcp_nodelay == NGX_TCP_NODELAY_SET) {
-
+            if (c->tcp_nodelay == NGX_TCP_NODELAY_SET)
+            {
                 tcp_nodelay = 0;
 
                 if (setsockopt(c->fd, IPPROTO_TCP, TCP_NODELAY,
-                               (const void *) &tcp_nodelay, sizeof(int)) == -1)
+                               (const void *)&tcp_nodelay, sizeof(int))
+                    == -1)
                 {
                     err = ngx_socket_errno;
 
@@ -113,14 +116,16 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
                      * and without the TCP_CORK
                      */
 
-                    if (err != NGX_EINTR) {
+                    if (err != NGX_EINTR)
+                    {
                         wev->error = 1;
                         ngx_connection_error(c, err,
                                              "setsockopt(TCP_NODELAY) failed");
                         return NGX_CHAIN_ERROR;
                     }
-
-                } else {
+                }
+                else
+                {
                     c->tcp_nodelay = NGX_TCP_NODELAY_UNSET;
 
                     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
@@ -128,9 +133,10 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
                 }
             }
 
-            if (c->tcp_nodelay == NGX_TCP_NODELAY_UNSET) {
-
-                if (ngx_tcp_nopush(c->fd) == -1) {
+            if (c->tcp_nodelay == NGX_TCP_NODELAY_UNSET)
+            {
+                if (ngx_tcp_nopush(c->fd) == -1)
+                {
                     err = ngx_socket_errno;
 
                     /*
@@ -138,14 +144,16 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
                      * we continue a processing without the TCP_CORK
                      */
 
-                    if (err != NGX_EINTR) {
+                    if (err != NGX_EINTR)
+                    {
                         wev->error = 1;
                         ngx_connection_error(c, err,
                                              ngx_tcp_nopush_n " failed");
                         return NGX_CHAIN_ERROR;
                     }
-
-                } else {
+                }
+                else
+                {
                     c->tcp_nopush = NGX_TCP_NOPUSH_SET;
 
                     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
@@ -156,16 +164,18 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 
         /* get the file buf */
 
-        if (header.count == 0 && cl && cl->buf->in_file && send < limit) {
+        if (header.count == 0 && cl && cl->buf->in_file && send < limit)
+        {
             file = cl->buf;
 
             /* coalesce the neighbouring file bufs */
 
-            file_size = (size_t) ngx_chain_coalesce_file(&cl, limit - send);
+            file_size = (size_t)ngx_chain_coalesce_file(&cl, limit - send);
 
             send += file_size;
 #if 1
-            if (file_size == 0) {
+            if (file_size == 0)
+            {
                 ngx_debug_point();
                 return NGX_CHAIN_ERROR;
             }
@@ -173,21 +183,25 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 
             n = ngx_linux_sendfile(c, file, file_size);
 
-            if (n == NGX_ERROR) {
+            if (n == NGX_ERROR)
+            {
                 return NGX_CHAIN_ERROR;
             }
 
-            if (n == NGX_DONE) {
+            if (n == NGX_DONE)
+            {
                 /* thread task posted */
                 return in;
             }
 
             sent = (n == NGX_AGAIN) ? 0 : n;
-
-        } else {
+        }
+        else
+        {
             n = ngx_writev(c, &header);
 
-            if (n == NGX_ERROR) {
+            if (n == NGX_ERROR)
+            {
                 return NGX_CHAIN_ERROR;
             }
 
@@ -198,13 +212,14 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 
         in = ngx_chain_update_sent(in, sent);
 
-        if (n == NGX_AGAIN) {
+        if (n == NGX_AGAIN)
+        {
             wev->ready = 0;
             return in;
         }
 
-        if ((size_t) (send - prev_send) != sent) {
-
+        if ((size_t)(send - prev_send) != sent)
+        {
             /*
              * sendfile() on Linux 4.3+ might be interrupted at any time,
              * and provides no indication if it was interrupted or not,
@@ -219,7 +234,8 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
             continue;
         }
 
-        if (send >= limit || in == NULL) {
+        if (send >= limit || in == NULL)
+        {
             return in;
         }
     }
@@ -230,16 +246,17 @@ static ssize_t
 ngx_linux_sendfile(ngx_connection_t *c, ngx_buf_t *file, size_t size)
 {
 #if (NGX_HAVE_SENDFILE64)
-    off_t      offset;
+    off_t offset;
 #else
-    int32_t    offset;
+    int32_t offset;
 #endif
-    ssize_t    n;
-    ngx_err_t  err;
+    ssize_t   n;
+    ngx_err_t err;
 
 #if (NGX_THREADS)
 
-    if (file->file->thread_handler) {
+    if (file->file->thread_handler)
+    {
         return ngx_linux_sendfile_thread(c, file, size);
     }
 
@@ -248,20 +265,22 @@ ngx_linux_sendfile(ngx_connection_t *c, ngx_buf_t *file, size_t size)
 #if (NGX_HAVE_SENDFILE64)
     offset = file->file_pos;
 #else
-    offset = (int32_t) file->file_pos;
+    offset = (int32_t)file->file_pos;
 #endif
 
 eintr:
 
-    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
-                   "sendfile: @%O %uz", file->file_pos, size);
+    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0, "sendfile: @%O %uz",
+                   file->file_pos, size);
 
     n = sendfile(c->fd, file->file->fd, &offset, size);
 
-    if (n == -1) {
+    if (n == -1)
+    {
         err = ngx_errno;
 
-        switch (err) {
+        switch (err)
+        {
         case NGX_EAGAIN:
             ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, err,
                            "sendfile() is not ready");
@@ -279,7 +298,8 @@ eintr:
         }
     }
 
-    if (n == 0) {
+    if (n == 0)
+    {
         /*
          * if sendfile returns zero, then someone has truncated the file,
          * so the offset became beyond the end of the file
@@ -292,8 +312,8 @@ eintr:
         return NGX_ERROR;
     }
 
-    ngx_log_debug3(NGX_LOG_DEBUG_EVENT, c->log, 0, "sendfile: %z of %uz @%O",
-                   n, size, file->file_pos);
+    ngx_log_debug3(NGX_LOG_DEBUG_EVENT, c->log, 0, "sendfile: %z of %uz @%O", n,
+                   size, file->file_pos);
 
     return n;
 }
@@ -301,32 +321,35 @@ eintr:
 
 #if (NGX_THREADS)
 
-typedef struct {
-    ngx_buf_t     *file;
-    ngx_socket_t   socket;
-    size_t         size;
+typedef struct
+{
+    ngx_buf_t   *file;
+    ngx_socket_t socket;
+    size_t       size;
 
-    size_t         sent;
-    ngx_err_t      err;
+    size_t    sent;
+    ngx_err_t err;
 } ngx_linux_sendfile_ctx_t;
 
 
 static ssize_t
 ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file, size_t size)
 {
-    ngx_event_t               *wev;
-    ngx_thread_task_t         *task;
-    ngx_linux_sendfile_ctx_t  *ctx;
+    ngx_event_t              *wev;
+    ngx_thread_task_t        *task;
+    ngx_linux_sendfile_ctx_t *ctx;
 
     ngx_log_debug3(NGX_LOG_DEBUG_CORE, c->log, 0,
-                   "linux sendfile thread: %d, %uz, %O",
-                   file->file->fd, size, file->file_pos);
+                   "linux sendfile thread: %d, %uz, %O", file->file->fd, size,
+                   file->file_pos);
 
     task = c->sendfile_task;
 
-    if (task == NULL) {
+    if (task == NULL)
+    {
         task = ngx_thread_task_alloc(c->pool, sizeof(ngx_linux_sendfile_ctx_t));
-        if (task == NULL) {
+        if (task == NULL)
+        {
             return NGX_ERROR;
         }
 
@@ -338,30 +361,35 @@ ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file, size_t size)
     ctx = task->ctx;
     wev = c->write;
 
-    if (task->event.complete) {
+    if (task->event.complete)
+    {
         task->event.complete = 0;
 
-        if (ctx->err == NGX_EAGAIN) {
+        if (ctx->err == NGX_EAGAIN)
+        {
             /*
              * if wev->complete is set, this means that a write event
              * happened while we were waiting for the thread task, so
              * we have to retry sending even on EAGAIN
              */
 
-            if (wev->complete) {
+            if (wev->complete)
+            {
                 return 0;
             }
 
             return NGX_AGAIN;
         }
 
-        if (ctx->err) {
+        if (ctx->err)
+        {
             wev->error = 1;
             ngx_connection_error(c, ctx->err, "sendfile() failed");
             return NGX_ERROR;
         }
 
-        if (ctx->sent == 0) {
+        if (ctx->sent == 0)
+        {
             /*
              * if sendfile returns zero, then someone has truncated the file,
              * so the offset became beyond the end of the file
@@ -377,7 +405,8 @@ ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file, size_t size)
         return ctx->sent;
     }
 
-    if (task->event.active && ctx->file == file) {
+    if (task->event.active && ctx->file == file)
+    {
         /*
          * tolerate duplicate calls; they can happen due to subrequests
          * or multiple calls of the next body filter from a filter
@@ -386,13 +415,14 @@ ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file, size_t size)
         return NGX_DONE;
     }
 
-    ctx->file = file;
+    ctx->file   = file;
     ctx->socket = c->fd;
-    ctx->size = size;
+    ctx->size   = size;
 
     wev->complete = 0;
 
-    if (file->file->thread_handler(task, file->file) != NGX_OK) {
+    if (file->file->thread_handler(task, file->file) != NGX_OK)
+    {
         return NGX_ERROR;
     }
 
@@ -405,25 +435,27 @@ ngx_linux_sendfile_thread_handler(void *data, ngx_log_t *log)
 {
     ngx_linux_sendfile_ctx_t *ctx = data;
 
-    off_t       offset;
-    ssize_t     n;
-    ngx_buf_t  *file;
+    off_t      offset;
+    ssize_t    n;
+    ngx_buf_t *file;
 
     ngx_log_debug0(NGX_LOG_DEBUG_CORE, log, 0, "linux sendfile thread handler");
 
-    file = ctx->file;
+    file   = ctx->file;
     offset = file->file_pos;
 
 again:
 
     n = sendfile(ctx->socket, file->file->fd, &offset, ctx->size);
 
-    if (n == -1) {
+    if (n == -1)
+    {
         ctx->err = ngx_errno;
-
-    } else {
+    }
+    else
+    {
         ctx->sent = n;
-        ctx->err = 0;
+        ctx->err  = 0;
     }
 
 #if 0
@@ -431,10 +463,11 @@ again:
 #endif
 
     ngx_log_debug4(NGX_LOG_DEBUG_EVENT, log, 0,
-                   "sendfile: %z (err: %d) of %uz @%O",
-                   n, ctx->err, ctx->size, file->file_pos);
+                   "sendfile: %z (err: %d) of %uz @%O", n, ctx->err, ctx->size,
+                   file->file_pos);
 
-    if (ctx->err == NGX_EINTR) {
+    if (ctx->err == NGX_EINTR)
+    {
         goto again;
     }
 }

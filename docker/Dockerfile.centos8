@@ -1,0 +1,12 @@
+FROM homqyy/dev_env_centos8
+
+ARG USER=1000
+ARG GROUP=1000
+
+LABEL cn.homqyy.docker.project=backup
+LABEL cn.homqyy.docker.author=homqyy
+LABEL cn.homqyy.docker.email=yilupiaoxuewhq@163.com
+
+USER root:root
+
+RUN yum install -y clang-tools-extra pcre-devel openssl-devel

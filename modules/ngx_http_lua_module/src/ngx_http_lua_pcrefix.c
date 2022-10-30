@@ -31,7 +31,8 @@ ngx_http_lua_pcre_malloc(size_t size)
 {
     dd("lua pcre pool is %p", ngx_http_lua_pcre_pool);
 
-    if (ngx_http_lua_pcre_pool) {
+    if (ngx_http_lua_pcre_pool)
+    {
         return ngx_palloc(ngx_http_lua_pcre_pool, size);
     }
 
@@ -46,7 +47,8 @@ ngx_http_lua_pcre_free(void *ptr)
 {
     dd("lua pcre pool is %p", ngx_http_lua_pcre_pool);
 
-    if (ngx_http_lua_pcre_pool) {
+    if (ngx_http_lua_pcre_pool)
+    {
         ngx_pfree(ngx_http_lua_pcre_pool, ptr);
         return;
     }
@@ -58,26 +60,26 @@ ngx_http_lua_pcre_free(void *ptr)
 ngx_pool_t *
 ngx_http_lua_pcre_malloc_init(ngx_pool_t *pool)
 {
-    ngx_pool_t          *old_pool;
+    ngx_pool_t *old_pool;
 
-    if (pcre_malloc != ngx_http_lua_pcre_malloc) {
-
+    if (pcre_malloc != ngx_http_lua_pcre_malloc)
+    {
         dd("overriding nginx pcre malloc and free");
 
         ngx_http_lua_pcre_pool = pool;
 
         old_pcre_malloc = pcre_malloc;
-        old_pcre_free = pcre_free;
+        old_pcre_free   = pcre_free;
 
         pcre_malloc = ngx_http_lua_pcre_malloc;
-        pcre_free = ngx_http_lua_pcre_free;
+        pcre_free   = ngx_http_lua_pcre_free;
 
         return NULL;
     }
 
     dd("lua pcre pool was %p", ngx_http_lua_pcre_pool);
 
-    old_pool = ngx_http_lua_pcre_pool;
+    old_pool               = ngx_http_lua_pcre_pool;
     ngx_http_lua_pcre_pool = pool;
 
     dd("lua pcre pool is %p", ngx_http_lua_pcre_pool);
@@ -95,9 +97,10 @@ ngx_http_lua_pcre_malloc_done(ngx_pool_t *old_pool)
 
     dd("lua pcre pool is %p", ngx_http_lua_pcre_pool);
 
-    if (old_pool == NULL) {
+    if (old_pool == NULL)
+    {
         pcre_malloc = old_pcre_malloc;
-        pcre_free = old_pcre_free;
+        pcre_free   = old_pcre_free;
     }
 }
 
