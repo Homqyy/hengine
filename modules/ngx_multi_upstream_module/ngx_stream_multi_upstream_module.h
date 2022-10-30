@@ -10,7 +10,7 @@
 #include "ngx_stream.h"
 #include "ngx_multi_upstream_module.h"
 
-ngx_stream_session_t* ngx_stream_multi_get_session(ngx_connection_t *c);
+ngx_stream_session_t *ngx_stream_multi_get_session(ngx_connection_t *c);
 
 ngx_int_t ngx_stream_multi_upstream_connection_detach(ngx_connection_t *c);
 ngx_int_t ngx_stream_multi_upstream_connection_close(ngx_connection_t *c);

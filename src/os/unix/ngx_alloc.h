@@ -19,12 +19,12 @@ void *ngx_calloc(size_t size, ngx_log_t *log);
 void *ngx_realloc(void *p, size_t size, ngx_log_t *log);
 #endif
 
-#define ngx_free          free
+#define ngx_free free
 
 #if (NGX_JEMALLOC)
 
 #define NGX_HAVE_POSIX_MEMALIGN 1
-#define NGX_HAVE_MEMALIGN 1
+#define NGX_HAVE_MEMALIGN       1
 
 #endif /* (NGX_JEMALLOC) */
 
@@ -41,14 +41,14 @@ void *ngx_memalign(size_t alignment, size_t size, ngx_log_t *log);
 
 #else
 
-#define ngx_memalign(alignment, size, log)  ngx_alloc(size, log)
+#define ngx_memalign(alignment, size, log) ngx_alloc(size, log)
 
 #endif
 
 
-extern ngx_uint_t  ngx_pagesize;
-extern ngx_uint_t  ngx_pagesize_shift;
-extern ngx_uint_t  ngx_cacheline_size;
+extern ngx_uint_t ngx_pagesize;
+extern ngx_uint_t ngx_pagesize_shift;
+extern ngx_uint_t ngx_cacheline_size;
 
 
 #endif /* _NGX_ALLOC_H_INCLUDED_ */

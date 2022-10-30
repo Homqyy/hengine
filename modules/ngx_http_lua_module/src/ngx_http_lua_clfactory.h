@@ -14,7 +14,7 @@
 
 ngx_int_t ngx_http_lua_clfactory_loadfile(lua_State *L, const char *filename);
 ngx_int_t ngx_http_lua_clfactory_loadbuffer(lua_State *L, const char *buff,
-    size_t size, const char *name);
+                                            size_t size, const char *name);
 
 
 #endif /* _NGX_HTTP_LUA_CLFACTORY_H_INCLUDED_ */

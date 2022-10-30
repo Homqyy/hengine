@@ -13,7 +13,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <stddef.h>             /* offsetof() */
+#include <stddef.h> /* offsetof() */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -25,10 +25,10 @@
 #include <dirent.h>
 #include <glob.h>
 #include <time.h>
-#include <sys/param.h>          /* ALIGN() */
-#include <sys/mount.h>          /* statfs() */
+#include <sys/param.h> /* ALIGN() */
+#include <sys/mount.h> /* statfs() */
 
-#include <sys/filio.h>          /* FIONBIO */
+#include <sys/filio.h> /* FIONBIO */
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -40,12 +40,12 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>        /* TCP_NODELAY, TCP_NOPUSH */
+#include <netinet/tcp.h> /* TCP_NODELAY, TCP_NOPUSH */
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/un.h>
 
-#include <libutil.h>            /* setproctitle() before 4.1 */
+#include <libutil.h> /* setproctitle() before 4.1 */
 #include <osreldate.h>
 #include <sys/sysctl.h>
 
@@ -58,14 +58,14 @@
  * FreeBSD 3.x has no CMSG_SPACE() and CMSG_LEN() and has the broken CMSG_DATA()
  */
 
-#undef  CMSG_SPACE
-#define CMSG_SPACE(l)       (ALIGN(sizeof(struct cmsghdr)) + ALIGN(l))
+#undef CMSG_SPACE
+#define CMSG_SPACE(l) (ALIGN(sizeof(struct cmsghdr)) + ALIGN(l))
 
-#undef  CMSG_LEN
-#define CMSG_LEN(l)         (ALIGN(sizeof(struct cmsghdr)) + (l))
+#undef CMSG_LEN
+#define CMSG_LEN(l) (ALIGN(sizeof(struct cmsghdr)) + (l))
 
-#undef  CMSG_DATA
-#define CMSG_DATA(cmsg)     ((u_char *)(cmsg) + ALIGN(sizeof(struct cmsghdr)))
+#undef CMSG_DATA
+#define CMSG_DATA(cmsg) ((u_char *)(cmsg) + ALIGN(sizeof(struct cmsghdr)))
 
 #endif
 
@@ -91,35 +91,35 @@
 #if (NGX_HAVE_FILE_AIO)
 
 #include <aio.h>
-typedef struct aiocb  ngx_aiocb_t;
+typedef struct aiocb ngx_aiocb_t;
 
 #if (__FreeBSD_version < 700005 && !defined __DragonFly__)
-#define sival_ptr     sigval_ptr
+#define sival_ptr sigval_ptr
 #endif
 
 #endif
 
 
-#define NGX_LISTEN_BACKLOG        -1
+#define NGX_LISTEN_BACKLOG -1
 
 
 #ifdef __DragonFly__
-#define NGX_KEEPALIVE_FACTOR      1000
+#define NGX_KEEPALIVE_FACTOR 1000
 #endif
 
 
 #ifndef IOV_MAX
-#define IOV_MAX   1024
+#define IOV_MAX 1024
 #endif
 
 
 #ifndef NGX_HAVE_INHERITED_NONBLOCK
-#define NGX_HAVE_INHERITED_NONBLOCK  1
+#define NGX_HAVE_INHERITED_NONBLOCK 1
 #endif
 
 
-#define NGX_HAVE_OS_SPECIFIC_INIT    1
-#define NGX_HAVE_DEBUG_MALLOC        1
+#define NGX_HAVE_OS_SPECIFIC_INIT 1
+#define NGX_HAVE_DEBUG_MALLOC     1
 
 
 extern char **environ;

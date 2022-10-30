@@ -10,7 +10,8 @@
 
 #include "ngx_multi_upstream_module.h"
 
-typedef ngx_int_t (*ngx_http_multi_upstream_handler_pt)(ngx_connection_t *pc, ngx_http_request_t *r);
+typedef ngx_int_t (*ngx_http_multi_upstream_handler_pt)(ngx_connection_t   *pc,
+                                                        ngx_http_request_t *r);
 
 ngx_int_t ngx_http_multi_upstream_connection_detach(ngx_connection_t *c);
 ngx_int_t ngx_http_multi_upstream_connection_close(ngx_connection_t *c);

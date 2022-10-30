@@ -13,10 +13,11 @@
 #include <ngx_core.h>
 
 
-typedef struct {
-    uint64_t  bytes;
-    uint32_t  a, b, c, d;
-    u_char    buffer[64];
+typedef struct
+{
+    uint64_t bytes;
+    uint32_t a, b, c, d;
+    u_char   buffer[64];
 } ngx_md5_t;
 
 

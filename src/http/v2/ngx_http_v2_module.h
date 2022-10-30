@@ -14,40 +14,43 @@
 #include <ngx_http.h>
 
 
-typedef struct {
-    size_t                          recv_buffer_size;
-    u_char                         *recv_buffer;
+typedef struct
+{
+    size_t  recv_buffer_size;
+    u_char *recv_buffer;
 } ngx_http_v2_main_conf_t;
 
 
-typedef struct {
-    size_t                          pool_size;
-    ngx_uint_t                      concurrent_streams;
-    ngx_uint_t                      concurrent_pushes;
-    ngx_uint_t                      max_requests;
-    size_t                          max_field_size;
-    size_t                          max_header_size;
-    size_t                          preread_size;
-    ngx_uint_t                      streams_index_mask;
-    ngx_msec_t                      recv_timeout;
-    ngx_msec_t                      idle_timeout;
+typedef struct
+{
+    size_t     pool_size;
+    ngx_uint_t concurrent_streams;
+    ngx_uint_t concurrent_pushes;
+    ngx_uint_t max_requests;
+    size_t     max_field_size;
+    size_t     max_header_size;
+    size_t     preread_size;
+    ngx_uint_t streams_index_mask;
+    ngx_msec_t recv_timeout;
+    ngx_msec_t idle_timeout;
 #if (T_NGX_HTTP2_SRV_ENABLE)
-    ngx_flag_t                      enable;
+    ngx_flag_t enable;
 #endif
 } ngx_http_v2_srv_conf_t;
 
 
-typedef struct {
-    size_t                          chunk_size;
+typedef struct
+{
+    size_t chunk_size;
 
-    ngx_flag_t                      push_preload;
+    ngx_flag_t push_preload;
 
-    ngx_flag_t                      push;
-    ngx_array_t                    *pushes;
+    ngx_flag_t   push;
+    ngx_array_t *pushes;
 } ngx_http_v2_loc_conf_t;
 
 
-extern ngx_module_t  ngx_http_v2_module;
+extern ngx_module_t ngx_http_v2_module;
 
 
 #endif /* _NGX_HTTP_V2_MODULE_H_INCLUDED_ */

@@ -14,16 +14,17 @@
 #include <ngx_event.h>
 
 
-struct ngx_thread_task_s {
-    ngx_thread_task_t   *next;
-    ngx_uint_t           id;
-    void                *ctx;
-    void               (*handler)(void *data, ngx_log_t *log);
-    ngx_event_t          event;
+struct ngx_thread_task_s
+{
+    ngx_thread_task_t *next;
+    ngx_uint_t         id;
+    void              *ctx;
+    void (*handler)(void *data, ngx_log_t *log);
+    ngx_event_t event;
 };
 
 
-typedef struct ngx_thread_pool_s  ngx_thread_pool_t;
+typedef struct ngx_thread_pool_s ngx_thread_pool_t;
 
 
 ngx_thread_pool_t *ngx_thread_pool_add(ngx_conf_t *cf, ngx_str_t *name);

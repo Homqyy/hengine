@@ -16,29 +16,31 @@
 
 #include "ngx_dubbo.h"
 
-typedef struct {
-    ngx_queue_t              queue;
+typedef struct
+{
+    ngx_queue_t queue;
 
-    uint64_t                 reqid;
+    uint64_t reqid;
 
-    ngx_http_request_t      *r;
+    ngx_http_request_t *r;
 
-    ngx_buf_t               *buf;
+    ngx_buf_t *buf;
 
-    void                    *data;
+    void *data;
 } ngx_http_dubbo_request_t;
 
 
-typedef struct {
-    ngx_pool_t                     *pool;   /* response data */
-    void                           *data;
-    ngx_buf_t                       backend_buf;
+typedef struct
+{
+    ngx_pool_t *pool; /* response data */
+    void       *data;
+    ngx_buf_t   backend_buf;
 
-    ngx_queue_t                     send_list;
-    ngx_queue_t                     wait_list;
+    ngx_queue_t send_list;
+    ngx_queue_t wait_list;
 } ngx_http_dubbo_connection_t;
 
-ngx_dubbo_connection_t* ngx_http_get_dubbo_connection(ngx_connection_t *pc);
+ngx_dubbo_connection_t *ngx_http_get_dubbo_connection(ngx_connection_t *pc);
 
 ngx_int_t ngx_http_dubbo_parse(ngx_connection_t *c, ngx_chain_t *in);
 

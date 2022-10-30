@@ -13,13 +13,13 @@
 #define _REENTRANT
 #endif
 
-#define _FILE_OFFSET_BITS  64   /* must be before <sys/types.h> */
+#define _FILE_OFFSET_BITS 64 /* must be before <sys/types.h> */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <stddef.h>             /* offsetof() */
+#include <stddef.h> /* offsetof() */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -31,9 +31,9 @@
 #include <dirent.h>
 #include <glob.h>
 #include <time.h>
-#include <sys/statvfs.h>        /* statvfs() */
+#include <sys/statvfs.h> /* statvfs() */
 
-#include <sys/filio.h>          /* FIONBIO */
+#include <sys/filio.h> /* FIONBIO */
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -45,19 +45,19 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>        /* TCP_NODELAY */
+#include <netinet/tcp.h> /* TCP_NODELAY */
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/un.h>
 
 #include <sys/systeminfo.h>
-#include <limits.h>             /* IOV_MAX */
+#include <limits.h> /* IOV_MAX */
 #include <inttypes.h>
 #include <crypt.h>
 
 #include <dlfcn.h>
 
-#define NGX_ALIGNMENT  _MAX_ALIGNMENT
+#define NGX_ALIGNMENT _MAX_ALIGNMENT
 
 #include <ngx_auto_config.h>
 
@@ -88,21 +88,21 @@
 #endif
 
 
-#define NGX_LISTEN_BACKLOG           511
+#define NGX_LISTEN_BACKLOG 511
 
 
 #ifndef NGX_HAVE_INHERITED_NONBLOCK
-#define NGX_HAVE_INHERITED_NONBLOCK  1
+#define NGX_HAVE_INHERITED_NONBLOCK 1
 #endif
 
 
 #ifndef NGX_HAVE_SO_SNDLOWAT
 /* setsockopt(SO_SNDLOWAT) returns ENOPROTOOPT */
-#define NGX_HAVE_SO_SNDLOWAT         0
+#define NGX_HAVE_SO_SNDLOWAT 0
 #endif
 
 
-#define NGX_HAVE_OS_SPECIFIC_INIT    1
+#define NGX_HAVE_OS_SPECIFIC_INIT 1
 #define ngx_debug_init()
 
 

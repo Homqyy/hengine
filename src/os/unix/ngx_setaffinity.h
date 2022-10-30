@@ -13,13 +13,13 @@
 
 #if (NGX_HAVE_SCHED_SETAFFINITY)
 
-typedef cpu_set_t  ngx_cpuset_t;
+typedef cpu_set_t ngx_cpuset_t;
 
 #elif (NGX_HAVE_CPUSET_SETAFFINITY)
 
 #include <sys/cpuset.h>
 
-typedef cpuset_t  ngx_cpuset_t;
+typedef cpuset_t ngx_cpuset_t;
 
 #endif
 
@@ -29,7 +29,7 @@ void ngx_setaffinity(ngx_cpuset_t *cpu_affinity, ngx_log_t *log);
 
 #define ngx_setaffinity(cpu_affinity, log)
 
-typedef uint64_t  ngx_cpuset_t;
+typedef uint64_t ngx_cpuset_t;
 
 #endif
 

@@ -14,88 +14,88 @@
 #include <ngx_event.h>
 
 
-typedef struct ngx_event_pipe_s  ngx_event_pipe_t;
+typedef struct ngx_event_pipe_s ngx_event_pipe_t;
 
 typedef ngx_int_t (*ngx_event_pipe_input_filter_pt)(ngx_event_pipe_t *p,
-                                                    ngx_buf_t *buf);
-typedef ngx_int_t (*ngx_event_pipe_output_filter_pt)(void *data,
+                                                    ngx_buf_t        *buf);
+typedef ngx_int_t (*ngx_event_pipe_output_filter_pt)(void        *data,
                                                      ngx_chain_t *chain);
 
 
-struct ngx_event_pipe_s {
-    ngx_connection_t  *upstream;
-    ngx_connection_t  *downstream;
+struct ngx_event_pipe_s
+{
+    ngx_connection_t *upstream;
+    ngx_connection_t *downstream;
 
-    ngx_chain_t       *free_raw_bufs;
-    ngx_chain_t       *in;
-    ngx_chain_t      **last_in;
+    ngx_chain_t  *free_raw_bufs;
+    ngx_chain_t  *in;
+    ngx_chain_t **last_in;
 
-    ngx_chain_t       *writing;
+    ngx_chain_t *writing;
 
-    ngx_chain_t       *out;
-    ngx_chain_t       *free;
-    ngx_chain_t       *busy;
+    ngx_chain_t *out;
+    ngx_chain_t *free;
+    ngx_chain_t *busy;
 
     /*
      * the input filter i.e. that moves HTTP/1.1 chunks
      * from the raw bufs to an incoming chain
      */
 
-    ngx_event_pipe_input_filter_pt    input_filter;
-    void                             *input_ctx;
+    ngx_event_pipe_input_filter_pt input_filter;
+    void                          *input_ctx;
 
-    ngx_event_pipe_output_filter_pt   output_filter;
-    void                             *output_ctx;
+    ngx_event_pipe_output_filter_pt output_filter;
+    void                           *output_ctx;
 
 #if (NGX_THREADS || NGX_COMPAT)
-    ngx_int_t                       (*thread_handler)(ngx_thread_task_t *task,
-                                                      ngx_file_t *file);
-    void                             *thread_ctx;
-    ngx_thread_task_t                *thread_task;
+    ngx_int_t (*thread_handler)(ngx_thread_task_t *task, ngx_file_t *file);
+    void              *thread_ctx;
+    ngx_thread_task_t *thread_task;
 #endif
 
-    unsigned           read:1;
-    unsigned           cacheable:1;
-    unsigned           single_buf:1;
-    unsigned           free_bufs:1;
-    unsigned           upstream_done:1;
-    unsigned           upstream_error:1;
-    unsigned           upstream_eof:1;
-    unsigned           upstream_blocked:1;
-    unsigned           downstream_done:1;
-    unsigned           downstream_error:1;
-    unsigned           cyclic_temp_file:1;
-    unsigned           aio:1;
+    unsigned read             : 1;
+    unsigned cacheable        : 1;
+    unsigned single_buf       : 1;
+    unsigned free_bufs        : 1;
+    unsigned upstream_done    : 1;
+    unsigned upstream_error   : 1;
+    unsigned upstream_eof     : 1;
+    unsigned upstream_blocked : 1;
+    unsigned downstream_done  : 1;
+    unsigned downstream_error : 1;
+    unsigned cyclic_temp_file : 1;
+    unsigned aio              : 1;
 
-    ngx_int_t          allocated;
-    ngx_bufs_t         bufs;
-    ngx_buf_tag_t      tag;
+    ngx_int_t     allocated;
+    ngx_bufs_t    bufs;
+    ngx_buf_tag_t tag;
 
-    ssize_t            busy_size;
+    ssize_t busy_size;
 
-    off_t              read_length;
-    off_t              length;
+    off_t read_length;
+    off_t length;
 
-    off_t              max_temp_file_size;
-    ssize_t            temp_file_write_size;
+    off_t   max_temp_file_size;
+    ssize_t temp_file_write_size;
 
-    ngx_msec_t         read_timeout;
-    ngx_msec_t         send_timeout;
-    ssize_t            send_lowat;
+    ngx_msec_t read_timeout;
+    ngx_msec_t send_timeout;
+    ssize_t    send_lowat;
 
-    ngx_pool_t        *pool;
-    ngx_log_t         *log;
+    ngx_pool_t *pool;
+    ngx_log_t  *log;
 
-    ngx_chain_t       *preread_bufs;
-    size_t             preread_size;
-    ngx_buf_t         *buf_to_file;
+    ngx_chain_t *preread_bufs;
+    size_t       preread_size;
+    ngx_buf_t   *buf_to_file;
 
-    size_t             limit_rate;
-    time_t             start_sec;
+    size_t limit_rate;
+    time_t start_sec;
 
-    ngx_temp_file_t   *temp_file;
+    ngx_temp_file_t *temp_file;
 
-    /* STUB */ int     num;
+    /* STUB */ int num;
 };
 
 
