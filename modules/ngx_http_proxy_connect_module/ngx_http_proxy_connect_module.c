@@ -1966,7 +1966,7 @@ ngx_http_proxy_connect_create_loc_conf(ngx_conf_t *cf)
 
     conf->accept_connect = NGX_CONF_UNSET;
     conf->allow_port_all = NGX_CONF_UNSET;
-    conf->auth           = NGX_CONF_UNSET
+    conf->auth           = NGX_CONF_UNSET;
     conf->allow_ports    = NGX_CONF_UNSET_PTR;
 
     conf->connect_timeout = NGX_CONF_UNSET_MSEC;
