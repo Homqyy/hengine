@@ -2178,6 +2178,11 @@ ngx_http_proxy_connect_post_read_handler(ngx_http_request_t *r)
             return NGX_HTTP_PROXY_AUTHENTICATION_REQUIRED;
         }
 
+        if (!r->headers_in.authorization)
+        {
+            r->headers_in.authorization = r->headers_in.proxy_authorization;
+        }
+
         /* init ctx */
 
         ctx = ngx_pcalloc(r->pool, sizeof(ngx_http_proxy_connect_ctx_t));
