@@ -96,6 +96,11 @@
 #define NGX_HTTP_FORBIDDEN                403
 #define NGX_HTTP_NOT_FOUND                404
 #define NGX_HTTP_NOT_ALLOWED              405
+
+#if (NGX_HTTP_PROXY_CONNECT)
+#define NGX_HTTP_PROXY_AUTHENTICATION_REQUIRED 407
+#endif
+
 #define NGX_HTTP_REQUEST_TIME_OUT         408
 #define NGX_HTTP_CONFLICT                 409
 #define NGX_HTTP_LENGTH_REQUIRED          411
@@ -236,6 +241,10 @@ typedef struct
     ngx_table_elt_t *destination;
     ngx_table_elt_t *overwrite;
     ngx_table_elt_t *date;
+#endif
+
+#if (NGX_HTTP_PROXY_CONNECT)
+    ngx_table_elt_t *proxy_authorization;
 #endif
 
     ngx_str_t user;

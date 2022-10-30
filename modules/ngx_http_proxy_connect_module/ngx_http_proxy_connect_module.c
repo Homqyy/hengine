@@ -27,6 +27,7 @@ typedef struct
 {
     ngx_flag_t   accept_connect;
     ngx_flag_t   allow_port_all;
+    ngx_flag_t   auth;
     ngx_array_t *allow_ports;
 
     ngx_msec_t read_timeout;
@@ -1965,6 +1966,7 @@ ngx_http_proxy_connect_create_loc_conf(ngx_conf_t *cf)
 
     conf->accept_connect = NGX_CONF_UNSET;
     conf->allow_port_all = NGX_CONF_UNSET;
+    conf->auth           = NGX_CONF_UNSET
     conf->allow_ports    = NGX_CONF_UNSET_PTR;
 
     conf->connect_timeout = NGX_CONF_UNSET_MSEC;
@@ -1988,6 +1990,7 @@ ngx_http_proxy_connect_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_value(conf->accept_connect, prev->accept_connect, 0);
     ngx_conf_merge_value(conf->allow_port_all, prev->allow_port_all, 0);
+    ngx_conf_merge_value(conf->auth, prev->auth, 0);
     ngx_conf_merge_ptr_value(conf->allow_ports, prev->allow_ports, NULL);
 
     ngx_conf_merge_msec_value(conf->connect_timeout, prev->connect_timeout,
@@ -2166,6 +2169,13 @@ ngx_http_proxy_connect_post_read_handler(ngx_http_request_t *r)
             ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
                           "proxy_connect: client sent connect method");
             return NGX_HTTP_BAD_REQUEST;
+        }
+
+        /* proxy auth */
+
+        if (!r->headers_in.proxy_authorization)
+        {
+            return NGX_HTTP_PROXY_AUTHENTICATION_REQUIRED;
         }
 
         /* init ctx */

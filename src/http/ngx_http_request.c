@@ -201,6 +201,14 @@ ngx_http_header_t ngx_http_headers_in[] = {
     {ngx_string("Cookie"), offsetof(ngx_http_headers_in_t, cookies),
      ngx_http_process_multi_header_lines},
 
+#if (NGX_HTTP_PROXY_CONNECT)
+
+    {ngx_string("Proxy-Authorization"),
+     offsetof(ngx_http_headers_in_t, proxy_authorization),
+     ngx_http_process_header_line},
+
+#endif
+
     {ngx_null_string, 0, NULL}};
 
 
