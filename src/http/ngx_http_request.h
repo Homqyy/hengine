@@ -91,11 +91,11 @@
 #define NGX_HTTP_TEMPORARY_REDIRECT 307
 #define NGX_HTTP_PERMANENT_REDIRECT 308
 
-#define NGX_HTTP_BAD_REQUEST              400
-#define NGX_HTTP_UNAUTHORIZED             401
-#define NGX_HTTP_FORBIDDEN                403
-#define NGX_HTTP_NOT_FOUND                404
-#define NGX_HTTP_NOT_ALLOWED              405
+#define NGX_HTTP_BAD_REQUEST  400
+#define NGX_HTTP_UNAUTHORIZED 401
+#define NGX_HTTP_FORBIDDEN    403
+#define NGX_HTTP_NOT_FOUND    404
+#define NGX_HTTP_NOT_ALLOWED  405
 
 #if (NGX_HTTP_PROXY_CONNECT)
 #define NGX_HTTP_PROXY_AUTHENTICATION_REQUIRED 407
@@ -288,6 +288,10 @@ typedef struct
     ngx_table_elt_t *www_authenticate;
     ngx_table_elt_t *expires;
     ngx_table_elt_t *etag;
+
+#if (NGX_HTTP_PROXY_CONNECT)
+    ngx_table_elt_t *proxy_authenticate;
+#endif
 
     ngx_str_t *override_charset;
 

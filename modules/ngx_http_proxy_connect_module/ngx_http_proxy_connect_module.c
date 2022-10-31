@@ -122,6 +122,9 @@ ngx_http_proxy_connect_sock_ntop(ngx_http_request_t                *r,
 static ngx_int_t
 ngx_http_proxy_connect_create_peer(ngx_http_request_t           *r,
                                    ngx_http_upstream_resolved_t *ur);
+static ngx_int_t
+ngx_http_proxy_connect_proxy_auth_basic_set_realm(ngx_http_request_t *r,
+                                                  ngx_str_t          *realm);
 
 
 static ngx_command_t ngx_http_proxy_connect_commands[] = {
@@ -129,6 +132,10 @@ static ngx_command_t ngx_http_proxy_connect_commands[] = {
     {ngx_string("proxy_connect"), NGX_HTTP_SRV_CONF | NGX_CONF_NOARGS,
      ngx_http_proxy_connect, NGX_HTTP_LOC_CONF_OFFSET,
      offsetof(ngx_http_proxy_connect_loc_conf_t, accept_connect), NULL},
+
+    {ngx_string("proxy_connect_auth"), NGX_HTTP_SRV_CONF | NGX_CONF_TAKE1,
+     ngx_conf_set_flag_slot, NGX_HTTP_LOC_CONF_OFFSET,
+     offsetof(ngx_http_proxy_connect_loc_conf_t, auth), NULL},
 
     {ngx_string("proxy_connect_allow"), NGX_HTTP_SRV_CONF | NGX_CONF_1MORE,
      ngx_http_proxy_connect_allow, NGX_HTTP_LOC_CONF_OFFSET, 0, NULL},
@@ -2173,14 +2180,19 @@ ngx_http_proxy_connect_post_read_handler(ngx_http_request_t *r)
 
         /* proxy auth */
 
-        if (!r->headers_in.proxy_authorization)
+        if (pclcf->auth)
         {
-            return NGX_HTTP_PROXY_AUTHENTICATION_REQUIRED;
-        }
+            ngx_str_t realm = ngx_string("proxy-authorization");
+            if (!r->headers_in.proxy_authorization)
+            {
+                return ngx_http_proxy_connect_proxy_auth_basic_set_realm(
+                    r, &realm);
+            }
 
-        if (!r->headers_in.authorization)
-        {
-            r->headers_in.authorization = r->headers_in.proxy_authorization;
+            if (!r->headers_in.authorization)
+            {
+                r->headers_in.authorization = r->headers_in.proxy_authorization;
+            }
         }
 
         /* init ctx */
@@ -2206,6 +2218,40 @@ ngx_http_proxy_connect_post_read_handler(ngx_http_request_t *r)
     return NGX_DECLINED;
 }
 
+static ngx_int_t
+ngx_http_proxy_connect_proxy_auth_basic_set_realm(ngx_http_request_t *r,
+                                                  ngx_str_t          *realm)
+{
+    size_t  len;
+    u_char *basic, *p;
+
+    r->headers_out.proxy_authenticate = ngx_list_push(&r->headers_out.headers);
+    if (r->headers_out.proxy_authenticate == NULL)
+    {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    len = sizeof("Basic realm=\"\"") - 1 + realm->len;
+
+    basic = ngx_pnalloc(r->pool, len);
+    if (basic == NULL)
+    {
+        r->headers_out.proxy_authenticate->hash = 0;
+        r->headers_out.proxy_authenticate       = NULL;
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    p  = ngx_cpymem(basic, "Basic realm=\"", sizeof("Basic realm=\"") - 1);
+    p  = ngx_cpymem(p, realm->data, realm->len);
+    *p = '"';
+
+    r->headers_out.proxy_authenticate->hash = 1;
+    ngx_str_set(&r->headers_out.proxy_authenticate->key, "Proxy-Authenticate");
+    r->headers_out.proxy_authenticate->value.data = basic;
+    r->headers_out.proxy_authenticate->value.len  = len;
+
+    return NGX_HTTP_PROXY_AUTHENTICATION_REQUIRED;
+}
 
 static ngx_int_t
 ngx_http_proxy_connect_init(ngx_conf_t *cf)
