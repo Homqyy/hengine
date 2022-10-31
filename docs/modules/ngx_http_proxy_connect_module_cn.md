@@ -189,6 +189,15 @@ Context: `server`
 proxy_connect_allow 1000-2000 3000-4000; # 允许端口范围1000-2000 和 3000-4000
 ```
 
+proxy_connect_auth
+------------------
+
+Syntax: **proxy_connect_auth `<on|off>`**  
+Default: `off`  
+Context: `server`  
+
+设置是否打开代理认证功能。如果开启的话会对客户端进行身份认证，当前仅支持`Basic`
+
 proxy_connect_connect_timeout
 -----------------------------
 

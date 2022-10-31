@@ -187,6 +187,15 @@ The value `port-range` will allow specified range of port to proxy, for example:
 proxy_connect_allow 1000-2000 3000-4000; # allow range of port from 1000 to 2000, from 3000 to 4000.
 ```
 
+proxy_connect_auth
+------------------
+
+Syntax: **proxy_connect_auth `<on|off>`**  
+Default: `off`  
+Context: `server`  
+
+Enable "Proxy Authorication" feature. Now, only `Basic` is supported.
+
 proxy_connect_connect_timeout
 -----------------------------
 
