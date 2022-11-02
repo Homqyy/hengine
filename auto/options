@@ -183,6 +183,9 @@ NGX_CPU_CACHE_LINE=
 
 NGX_POST_CONF_MSG=
 
+NGX_KCP=NO
+KCP=auto/lib/kcp/src
+
 opt=
 
 for option
@@ -229,6 +232,8 @@ do
             NGX_POST_CONF_MSG="$NGX_POST_CONF_MSG
 $0: warning: the \"--with-ipv6\" option is deprecated"
         ;;
+
+        --with-kcp)                      NGX_KCP=YES;;
 
         --without-http)                  HTTP=NO                    ;;
         --without-http-cache)            HTTP_CACHE=NO              ;;
@@ -470,6 +475,8 @@ cat << END
   --with-threads                     enable thread pool support
 
   --with-file-aio                    enable file AIO support
+
+  --with-kcp                         enable kcp support
 
   --with-http_ssl_module             enable ngx_http_ssl_module
   --with-http_v2_module              enable ngx_http_v2_module

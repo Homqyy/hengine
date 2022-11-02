@@ -1,0 +1,18 @@
+
+# Copyright (C) homqyy
+
+echo "[`date`] kcp: $KCP, buid_dir: $KCP_BUILD_DIR, compile_dir: $KCP_COMPILE_DIR" >> /tmp/kcp.log
+
+cat << END                                                >> $NGX_MAKEFILE
+
+$KCP_BUILD_DIR/Makefile:	$NGX_MAKEFILE
+	cp -ra $KCP $KCP_COMPILE_DIR \\
+	&& cmake -B $KCP_BUILD_DIR -S $KCP_COMPILE_DIR
+
+$KCP_COMPILE_DIR/ikcp.h:	$KCP_BUILD_DIR/Makefile
+
+$KCP_BUILD_DIR/libkcp.a:	$KCP_BUILD_DIR/Makefile
+	cd $KCP_BUILD_DIR \\
+	&& make
+
+END

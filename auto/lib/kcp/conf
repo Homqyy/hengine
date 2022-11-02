@@ -1,0 +1,28 @@
+
+# Copyright (C) homqyy
+
+if [ $NGX_KCP = YES ]; then
+
+    if [ "$NGX_PLATFORM" != win32 ]; then
+
+        KCP_COMPILE_DIR=$NGX_OBJS/src/os/unix/kcp
+        KCP_BUILD_DIR=$KCP_COMPILE_DIR/build
+
+        CORE_INCS="$CORE_INCS $KCP_COMPILE_DIR"
+        CORE_DEPS="$CORE_DEPS $KCP_COMPILE_DIR/ikcp.h $KCP_BUILD_DIR/libkcp.a"
+        CORE_LIBS="$CORE_LIBS $KCP_BUILD_DIR/libkcp.a"
+
+        have=NGX_KCP . auto/have
+    else
+
+        cat << END
+
+$0: error: kcp isn't supported by windows.
+
+END
+
+        exit 1
+
+    fi
+
+fi

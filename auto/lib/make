@@ -27,3 +27,6 @@ if [ $JEMALLOC != NONE ]; then
     . auto/lib/jemalloc/make
 fi
 
+if [ $NGX_KCP != NO ]; then
+    . auto/lib/kcp/make
+fi

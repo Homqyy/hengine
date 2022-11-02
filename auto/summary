@@ -11,6 +11,10 @@ if [ $USE_THREADS = YES ]; then
     echo "  + using threads"
 fi
 
+if [ $NGX_KCP = YES ]; then
+    echo "  + using buildin KCP library"
+fi
+
 if [ $USE_PCRE = DISABLED ]; then
     echo "  + PCRE library is disabled"
 

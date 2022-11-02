@@ -57,3 +57,7 @@ if [ $JEMALLOC != NO ]; then
     . auto/lib/jemalloc/conf
 fi
 
+if [ $NGX_KCP != NO ]; then
+    . auto/lib/kcp/conf
+fi
+
