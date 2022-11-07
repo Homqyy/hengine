@@ -174,6 +174,10 @@ struct ngx_connection_s
 
     ngx_udp_connection_t *udp;
 
+#if (NGX_KCP)
+    ngx_kcp_t *kcp;
+#endif
+
     struct sockaddr *local_sockaddr;
     socklen_t        local_socklen;
 

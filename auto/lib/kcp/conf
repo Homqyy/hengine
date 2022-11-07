@@ -8,8 +8,9 @@ if [ $NGX_KCP = YES ]; then
         KCP_COMPILE_DIR=$NGX_OBJS/src/os/unix/kcp
         KCP_BUILD_DIR=$KCP_COMPILE_DIR/build
 
+        CORE_SRCS="$CORE_SRCS src/os/unix/ngx_kcp.c src/event/ngx_event_kcp.c"
         CORE_INCS="$CORE_INCS $KCP_COMPILE_DIR"
-        CORE_DEPS="$CORE_DEPS $KCP_COMPILE_DIR/ikcp.h $KCP_BUILD_DIR/libkcp.a"
+        CORE_DEPS="$CORE_DEPS src/os/unix/ngx_kcp.h src/event/ngx_event_kcp.h $KCP_COMPILE_DIR/ikcp.h $KCP_BUILD_DIR/libkcp.a"
         CORE_LIBS="$CORE_LIBS $KCP_BUILD_DIR/libkcp.a"
 
         have=NGX_KCP . auto/have

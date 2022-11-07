@@ -30,6 +30,10 @@ typedef struct ngx_proxy_protocol_s ngx_proxy_protocol_t;
 typedef struct ngx_ssl_connection_s ngx_ssl_connection_t;
 typedef struct ngx_udp_connection_s ngx_udp_connection_t;
 
+#if (NGX_KCP)
+typedef struct ngx_kcp_s ngx_kcp_t;
+#endif
+
 typedef void (*ngx_event_handler_pt)(ngx_event_t *ev);
 typedef void (*ngx_connection_handler_pt)(ngx_connection_t *c);
 
@@ -95,6 +99,10 @@ typedef void (*ngx_connection_handler_pt)(ngx_connection_t *c);
 #include <ngx_open_file_cache.h>
 #include <ngx_os.h>
 #include <ngx_connection.h>
+#if (NGX_KCP)
+#include <ngx_kcp.h>
+#include <ngx_event_kcp.h>
+#endif
 #include <ngx_syslog.h>
 #include <ngx_proxy_protocol.h>
 #if (T_PIPES)

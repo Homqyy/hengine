@@ -614,6 +614,10 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 
     c = ev->data;
 
+#if (NGX_KCP)
+    if (c->kcp) return NGX_OK;
+#endif
+
     events = (uint32_t)event;
 
     if (event == NGX_READ_EVENT)
@@ -682,6 +686,12 @@ ngx_epoll_del_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     ngx_connection_t  *c;
     struct epoll_event ee;
 
+#if (NGX_KCP)
+    c = ev->data;
+
+    if (c->kcp) return NGX_OK;
+#endif
+
     /*
      * when the file descriptor is closed, the epoll automatically deletes
      * it from its queue, so we do not need to delete explicitly the event
@@ -742,6 +752,10 @@ ngx_epoll_add_connection(ngx_connection_t *c)
 {
     struct epoll_event ee;
 
+#if (NGX_KCP)
+    if (c->kcp) return NGX_OK;
+#endif
+
     ee.events   = EPOLLIN | EPOLLOUT | EPOLLET | EPOLLRDHUP;
     ee.data.ptr = (void *)((uintptr_t)c | c->read->instance);
 
@@ -767,6 +781,10 @@ ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
 {
     int                op;
     struct epoll_event ee;
+
+#if (NGX_KCP)
+    if (c->kcp) return NGX_OK;
+#endif
 
     /*
      * when the file descriptor is closed the epoll automatically deletes
@@ -1023,7 +1041,18 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             }
             else
             {
+#if (NGX_KCP)
+                if (c->kcp)
+                {
+                    ngx_event_kcp_handler(rev);
+                }
+                else
+                {
+                    rev->handler(rev);
+                }
+#else
                 rev->handler(rev);
+#endif
             }
         }
 
@@ -1060,7 +1089,18 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             }
             else
             {
+#if (NGX_KCP)
+                if (c->kcp)
+                {
+                    ngx_event_kcp_handler(wev);
+                }
+                else
+                {
+                    wev->handler(wev);
+                }
+#else
                 wev->handler(wev);
+#endif
             }
         }
 

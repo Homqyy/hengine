@@ -713,6 +713,14 @@ ngx_stream_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             ls->type = SOCK_DGRAM;
             continue;
         }
+
+#if (NGX_KCP)
+        if (ngx_strcmp(value[i].data, "kcp") == 0)
+        {
+            ls->kcp = 1;
+        }
+#endif // if (NGX_KCP)
+
 #endif
 
 #if (NGX_STREAM_SNI)
@@ -985,6 +993,12 @@ ngx_stream_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             return "\"proxy_protocol\" parameter is incompatible with \"udp\"";
         }
     }
+#if (NGX_KCP)
+    else if (ls->kcp && ls->type == SOCK_STREAM)
+    {
+        return "\"kcp\" parameter is incompatible with \"tcp\"";
+    }
+#endif
 
     als = cmcf->listen.elts;
 

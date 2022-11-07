@@ -31,7 +31,19 @@ ngx_event_process_posted(ngx_cycle_t *cycle, ngx_queue_t *posted)
 
         ngx_delete_posted_event(ev);
 
+#if (NGX_KCP)
+        ngx_connection_t *c = ev->data;
+        if (c->kcp)
+        {
+            ngx_event_kcp_handler(ev);
+        }
+        else
+        {
+            ev->handler(ev);
+        }
+#else
         ev->handler(ev);
+#endif
     }
 }
 

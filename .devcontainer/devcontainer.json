@@ -14,7 +14,8 @@
 				"xaver.clang-format",
 				"ms-vscode.cpptools",
 				"ms-vscode.cpptools-themes",
-				"Gruntfuggly.todo-tree"
+				"Gruntfuggly.todo-tree",
+				"cschlosser.doxdocgen"
 			]
 		}
 	}

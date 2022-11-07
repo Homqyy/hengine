@@ -65,6 +65,11 @@ struct ngx_cycle_s
     ngx_rbtree_t      config_dump_rbtree;
     ngx_rbtree_node_t config_dump_sentinel;
 
+#if (NGX_KCP)
+    ngx_rbtree_t      kcp_rbtree;
+    ngx_rbtree_node_t kcp_sentinel;
+#endif
+
     ngx_list_t open_files;
     ngx_list_t shared_memory;
 

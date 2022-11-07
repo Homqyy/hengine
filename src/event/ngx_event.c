@@ -231,6 +231,14 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     delta = ngx_current_msec;
 
+#if (NGX_KCP)
+    ngx_msec_t kcp_timer;
+
+    kcp_timer = ngx_event_kcp_process_connections(cycle);
+
+    timer = ngx_min(kcp_timer, timer);
+#endif
+
     (void)ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta;
