@@ -718,6 +718,7 @@ ngx_stream_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (ngx_strcmp(value[i].data, "kcp") == 0)
         {
             ls->kcp = 1;
+            continue;
         }
 #endif // if (NGX_KCP)
 

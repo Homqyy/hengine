@@ -615,7 +615,18 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     c = ev->data;
 
 #if (NGX_KCP)
-    if (c->kcp) return NGX_OK;
+    if (c->kcp)
+    {
+        if (event == NGX_READ_EVENT)
+        {
+            c->kcp->waiting_read = 1;
+        }
+        else
+        {
+            c->kcp->waiting_write = 1;
+        }
+        return NGX_OK;
+    }
 #endif
 
     events = (uint32_t)event;
@@ -689,7 +700,18 @@ ngx_epoll_del_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 #if (NGX_KCP)
     c = ev->data;
 
-    if (c->kcp) return NGX_OK;
+    if (c->kcp)
+    {
+        if (event == NGX_READ_EVENT)
+        {
+            c->kcp->waiting_read = 0;
+        }
+        else
+        {
+            c->kcp->waiting_write = 0;
+        }
+        return NGX_OK;
+    }
 #endif
 
     /*
@@ -753,7 +775,12 @@ ngx_epoll_add_connection(ngx_connection_t *c)
     struct epoll_event ee;
 
 #if (NGX_KCP)
-    if (c->kcp) return NGX_OK;
+    if (c->kcp)
+    {
+        c->kcp->waiting_read  = 1;
+        c->kcp->waiting_write = 1;
+        return NGX_OK;
+    }
 #endif
 
     ee.events   = EPOLLIN | EPOLLOUT | EPOLLET | EPOLLRDHUP;
@@ -783,7 +810,12 @@ ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
     struct epoll_event ee;
 
 #if (NGX_KCP)
-    if (c->kcp) return NGX_OK;
+    if (c->kcp)
+    {
+        c->kcp->waiting_read  = 0;
+        c->kcp->waiting_write = 0;
+        return NGX_OK;
+    }
 #endif
 
     /*

@@ -13,13 +13,19 @@
 
 struct ngx_kcp_s
 {
-    ikcpcb *ikcp;
+    ikcpcb           *ikcp;
+    ngx_atomic_uint_t number;
+    ngx_rbtree_node_t timer;
+    ngx_int_t         max_waiting_send_number;
+    ngx_int_t         valve_of_send;
+
+    ngx_send_pt       transport_send;
+    ngx_send_chain_pt transport_send_chain;
+    ngx_recv_pt       transport_recv;
+    ngx_recv_chain_pt transport_recv_chain;
 
     void (*write_handler)(ngx_connection_t *c);
     void (*read_handler)(ngx_connection_t *c);
-
-    ngx_int_t max_waiting_send_number;
-    ngx_int_t valve_of_send;
 
     unsigned close         : 1;
     unsigned error         : 1;
@@ -28,7 +34,5 @@ struct ngx_kcp_s
 };
 
 ngx_kcp_t *ngx_create_kcp(ngx_connection_t *c);
-ssize_t    ngx_kcp_send(ngx_connection_t *c, u_char *b, size_t size);
-ssize_t    ngx_kcp_recv(ngx_connection_t *c, u_char *buf, size_t size);
 
 #endif //!_NGX_KCP_H_INCLUDED_

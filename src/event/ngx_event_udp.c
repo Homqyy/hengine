@@ -271,7 +271,18 @@ ngx_event_recvmsg(ngx_event_t *ev)
             rev->ready  = 1;
             rev->active = 0;
 
+#if (NGX_KCP)
+            if (c->kcp)
+            {
+                ngx_event_kcp_handler(rev);
+            }
+            else
+            {
+                rev->handler(rev);
+            }
+#else
             rev->handler(rev);
+#endif
 
             if (c->udp)
             {
@@ -384,6 +395,18 @@ ngx_event_recvmsg(ngx_event_t *ev)
 
 #if (NGX_STAT_STUB)
         (void)ngx_atomic_fetch_add(ngx_stat_handled, 1);
+#endif
+
+#if (NGX_KCP)
+        if (ls->kcp)
+        {
+            c->kcp = ngx_create_kcp(c);
+            if (c->kcp == NULL)
+            {
+                ngx_close_accepted_udp_connection(c);
+                return;
+            }
+        }
 #endif
 
         if (ls->addr_ntop)
