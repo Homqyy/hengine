@@ -27,11 +27,10 @@ static ssize_t      ngx_kcp_recv_chain(ngx_connection_t *c, ngx_chain_t *in,
 static ngx_chain_t *
 ngx_kcp_send_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 {
-    ngx_kcp_t   *kcp = c->kcp;
     ngx_event_t *wev;
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp send chain %d",
-                   kcp->number);
+                   c->kcp->number);
 
     wev = c->write;
 
@@ -135,9 +134,8 @@ ngx_kcp_send_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 static ssize_t
 ngx_kcp_recv_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 {
-    ngx_kcp_t *kcp = c->kcp;
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp recv chain %d",
-                   kcp->number);
+                   c->kcp->number);
     return NGX_ERROR;
 }
 
@@ -204,9 +202,11 @@ ngx_kcp_recv(ngx_connection_t *c, u_char *buf, size_t size)
 static void
 ngx_kcp_log(const char *log, struct IKCPCB *kcp, void *user)
 {
+#if (NGX_DEBUG)
     ngx_connection_t *c = user;
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp log: %s", log);
+#endif
 }
 
 ngx_kcp_t *
@@ -219,6 +219,19 @@ ngx_create_kcp(ngx_connection_t *c)
 
     kcp = ngx_pcalloc(c->pool, sizeof(ngx_kcp_t));
     if (kcp == NULL) return NULL;
+
+    kcp->waiting_read            = c->read->active ? 1 : 0;
+    kcp->waiting_write           = c->write->active ? 1 : 0;
+    kcp->number                  = c->number;
+    kcp->write_handler           = ngx_kcp_write_handler;
+    kcp->read_handler            = ngx_kcp_read_handler;
+    kcp->max_waiting_send_number = 2048;
+    kcp->valve_of_send           = 64;
+
+    kcp->transport_send       = c->send;
+    kcp->transport_send_chain = c->send_chain;
+    kcp->transport_recv       = c->recv;
+    kcp->transport_recv_chain = c->recv_chain;
 
     ikcp = ikcp_create(c->number, c);
     if (ikcp == NULL) return NULL;
@@ -263,24 +276,14 @@ ngx_create_kcp(ngx_connection_t *c)
     cln->data    = kcp;
     cln->handler = (ngx_pool_cleanup_pt)ngx_destroy_kcp;
 
-    kcp->number                  = c->number;
-    kcp->ikcp                    = ikcp;
-    kcp->write_handler           = ngx_kcp_write_handler;
-    kcp->read_handler            = ngx_kcp_read_handler;
-    kcp->max_waiting_send_number = 2048;
-    kcp->valve_of_send           = 64;
-
-    kcp->transport_send       = c->send;
-    kcp->transport_send_chain = c->send_chain;
-    kcp->transport_recv       = c->recv;
-    kcp->transport_recv_chain = c->recv_chain;
-
     c->send       = ngx_kcp_send;
     c->send_chain = ngx_kcp_send_chain;
     c->recv       = ngx_kcp_recv;
     c->recv_chain = ngx_kcp_recv_chain;
 
     ngx_event_kcp_add_timer(c->log, kcp);
+
+    kcp->ikcp = ikcp;
 
     return kcp;
 }
@@ -305,18 +308,6 @@ ngx_kcp_write_handler(ngx_connection_t *c)
     n = ikcp_waitsnd(kcp->ikcp);
 
 done:
-
-    {
-        if (0 < ikcp_peeksize(kcp->ikcp) && c->read->handler)
-        {
-            c->read->handler(c->read);
-        }
-
-        if (kcp->waiting_read && c->read->handler && (kcp->error || kcp->close))
-        {
-            c->read->handler(c->read);
-        }
-    }
 
     /* notify above layer to write */
 
@@ -384,21 +375,13 @@ ngx_kcp_read_handler(ngx_connection_t *c)
     ngx_event_kcp_update_timer(c->log, kcp);
 
     /* notify above layer to read */
+    if (kcp->waiting_read && c->read->handler
+        && (0 < ikcp_peeksize(kcp->ikcp) || kcp->error || kcp->close))
     {
         unsigned old = c->read->ready;
 
         c->read->ready = 1; // set 'ready=1' to notify above layer to read
-
-        if (0 < ikcp_peeksize(kcp->ikcp) && c->read->handler)
-        {
-            c->read->handler(c->read);
-        }
-
-        if (kcp->waiting_read && c->read->handler && (kcp->error || kcp->close))
-        {
-            c->read->handler(c->read);
-        }
-
+        c->read->handler(c->read);
         c->read->ready = old; // recover
     }
 }

@@ -35,12 +35,19 @@ ngx_event_kcp_process_connections(ngx_cycle_t *cycle)
 
         kcp = (ngx_kcp_t *)((char *)node - offsetof(ngx_kcp_t, timer));
 
-        ngx_log_debug2(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                       "kcp timer del: %d:%M", kcp->number, kcp->timer.key);
+        ngx_log_debug3(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
+                       "kcp timer del: %d:%M, current time: %M", kcp->number,
+                       kcp->timer.key, ngx_current_msec);
 
         ikcp_update(kcp->ikcp, ngx_current_msec);
 
         ngx_event_kcp_update_timer(cycle->log, kcp);
+
+        if (kcp->timer.key == ngx_current_msec)
+        {
+            ikcp_flush(kcp->ikcp); // immediately flush
+            ngx_event_kcp_update_timer(cycle->log, kcp);
+        }
     }
 
     root = cycle->kcp_rbtree.root;
@@ -61,8 +68,9 @@ ngx_event_kcp_update_timer(ngx_log_t *log, ngx_kcp_t *kcp)
 
     kcp->timer.key = ikcp_check(kcp->ikcp, ngx_current_msec);
 
-    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, log, 0, "kcp timer update: %d:%M",
-                   kcp->number, kcp->timer.key);
+    ngx_log_debug3(NGX_LOG_DEBUG_EVENT, log, 0,
+                   "kcp timer update: %d:%M, current time: %M", kcp->number,
+                   kcp->timer.key, ngx_current_msec);
 
     ngx_rbtree_insert((ngx_rbtree_t *)&ngx_cycle->kcp_rbtree, &kcp->timer);
 }
