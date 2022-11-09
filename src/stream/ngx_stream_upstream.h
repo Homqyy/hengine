@@ -67,6 +67,10 @@ typedef struct
     int type;
 #endif
 
+#if (NGX_STREAM_UPSTREAM_TYPE && NGX_KCP)
+    int        kcp;
+    ngx_uint_t conv;
+#endif
     unsigned backup : 1;
 
     NGX_COMPAT_BEGIN(4)

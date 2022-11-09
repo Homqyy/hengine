@@ -358,6 +358,18 @@ ngx_stream_proxy_handler(ngx_stream_session_t *s)
     }
 
     u->peer.type = c->type;
+#if (NGX_KCP)
+    if (c->kcp)
+    {
+        u->peer.kcp  = 1;
+        u->peer.conv = ngx_kcp_get_conv(c->kcp);
+    }
+    else
+    {
+        u->peer.kcp  = 0;
+        u->peer.conv = 0;
+    }
+#endif
     u->start_sec = ngx_time();
 
     c->write->handler = ngx_stream_proxy_downstream_handler;
@@ -748,6 +760,18 @@ ngx_stream_proxy_init_upstream(ngx_stream_session_t *s)
         ngx_stream_proxy_next_upstream(s);
         return;
     }
+
+#if (NGX_KCP)
+    if (u->peer.kcp)
+    {
+        pc->kcp = ngx_create_kcp(pc, u->peer.conv);
+        if (pc->kcp == NULL)
+        {
+            ngx_stream_proxy_finalize(s, NGX_STREAM_INTERNAL_SERVER_ERROR);
+            return;
+        }
+    }
+#endif
 
     pscf = ngx_stream_get_module_srv_conf(s, ngx_stream_proxy_module);
 

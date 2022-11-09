@@ -69,6 +69,11 @@ struct ngx_peer_connection_s
     unsigned so_keepalive : 1;
     unsigned down         : 1;
 
+#if (NGX_KCP)
+    ngx_uint_t conv;
+    unsigned   kcp : 1;
+#endif
+
 #if (T_NGX_HTTP_DYNAMIC_RESOLVE)
     unsigned resolved : 2;
 #endif

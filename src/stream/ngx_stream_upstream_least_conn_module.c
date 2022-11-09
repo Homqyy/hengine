@@ -241,7 +241,14 @@ ngx_stream_upstream_get_least_conn_peer(ngx_peer_connection_t *pc, void *data)
     pc->socklen  = best->socklen;
     pc->name     = &best->name;
 #if (NGX_STREAM_UPSTREAM_TYPE)
-    pc->type = best->type;
+    if (best->type) pc->type = best->type;
+#endif
+#if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
+    if (best->kcp != -1)
+    {
+        pc->kcp  = best->kcp;
+        pc->conv = best->conv;
+    }
 #endif
     best->conns++;
 

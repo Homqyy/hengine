@@ -52,6 +52,11 @@ struct ngx_stream_upstream_rr_peer_s
     int type;
 #endif
 
+#if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
+    int        kcp;
+    ngx_uint_t conv;
+#endif
+
     ngx_stream_upstream_rr_peer_t *next;
 
     NGX_COMPAT_BEGIN(25)

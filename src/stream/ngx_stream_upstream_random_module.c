@@ -299,7 +299,14 @@ ngx_stream_upstream_get_random_peer(ngx_peer_connection_t *pc, void *data)
     pc->socklen  = peer->socklen;
     pc->name     = &peer->name;
 #if (NGX_STREAM_UPSTREAM_TYPE)
-    pc->type = peer->type;
+    if (peer->type) pc->type = peer->type;
+#endif
+#if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
+    if (peer->kcp != -1)
+    {
+        pc->kcp  = peer->kcp;
+        pc->conv = peer->conv;
+    }
 #endif
 
     peer->conns++;
@@ -420,7 +427,14 @@ ngx_stream_upstream_get_random2_peer(ngx_peer_connection_t *pc, void *data)
     pc->socklen  = peer->socklen;
     pc->name     = &peer->name;
 #if (NGX_STREAM_UPSTREAM_TYPE)
-    pc->type = peer->type;
+    if (peer->type) pc->type = peer->type;
+#endif
+#if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
+    if (peer->kcp != -1)
+    {
+        pc->kcp  = peer->kcp;
+        pc->conv = peer->conv;
+    }
 #endif
 
     peer->conns++;

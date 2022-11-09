@@ -431,6 +431,10 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #if (NGX_STREAM_UPSTREAM_TYPE)
     int type;
 #endif
+#if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
+    int        kcp;
+    ngx_uint_t conv;
+#endif
     ngx_uint_t                    i;
     ngx_stream_upstream_server_t *us;
 
@@ -451,10 +455,31 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #if (NGX_STREAM_UPSTREAM_TYPE)
     type = 0; // not specified
 #endif
+#if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
+    kcp  = -1; // not specified
+    conv = 0;
+#endif
 
     for (i = 2; i < cf->args->nelts; i++)
     {
 #if (NGX_STREAM_UPSTREAM_TYPE)
+
+#if (NGX_KCP)
+        if (ngx_strncmp(value[i].data, "kcp=", 4) == 0)
+        {
+            kcp = 1;
+
+            conv = ngx_atoi(&value[i].data[4], value[i].len - 4);
+            if (conv <= 0)
+            {
+                return "invalid kcp conv value. must is number and greater "
+                       "than 0.";
+            }
+
+            continue;
+        }
+#endif
+
         if (ngx_strncmp(value[i].data, "udp", 3) == 0)
         {
             if (type)
@@ -575,6 +600,21 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         goto invalid;
     }
 
+#if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
+    if (type)
+    {
+        if (kcp == 1 && type != SOCK_DGRAM)
+        {
+            return "kcp must upon udp";
+        }
+
+        if (kcp == -1)
+        {
+            kcp = 0; // no kcp
+        }
+    }
+#endif
+
     ngx_memzero(&u, sizeof(ngx_url_t));
 
     u.url = value[1];
@@ -607,6 +647,10 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 #if (NGX_STREAM_UPSTREAM_TYPE)
     us->type = type;
+#endif
+#if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
+    us->kcp  = kcp;
+    us->conv = conv;
 #endif
 
     return NGX_CONF_OK;
