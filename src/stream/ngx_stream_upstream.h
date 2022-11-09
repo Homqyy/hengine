@@ -63,6 +63,10 @@ typedef struct
     ngx_msec_t  slow_start;
     ngx_uint_t  down;
 
+#if (NGX_STREAM_UPSTREAM_TYPE)
+    int type;
+#endif
+
     unsigned backup : 1;
 
     NGX_COMPAT_BEGIN(4)

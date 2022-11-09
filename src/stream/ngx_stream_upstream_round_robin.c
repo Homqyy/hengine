@@ -115,6 +115,9 @@ ngx_stream_upstream_init_round_robin(ngx_conf_t                     *cf,
                 peer[n].fail_timeout     = server[i].fail_timeout;
                 peer[n].down             = server[i].down;
                 peer[n].server           = server[i].name;
+#if (NGX_STREAM_UPSTREAM_TYPE)
+                peer[n].type = server[i].type;
+#endif
 
                 *peerp = &peer[n];
                 peerp  = &peer[n].next;
@@ -187,6 +190,9 @@ ngx_stream_upstream_init_round_robin(ngx_conf_t                     *cf,
                 peer[n].fail_timeout     = server[i].fail_timeout;
                 peer[n].down             = server[i].down;
                 peer[n].server           = server[i].name;
+#if (NGX_STREAM_UPSTREAM_TYPE)
+                peer[n].type = server[i].type;
+#endif
 
                 *peerp = &peer[n];
                 peerp  = &peer[n].next;
@@ -260,8 +266,11 @@ ngx_stream_upstream_init_round_robin(ngx_conf_t                     *cf,
         peer[i].max_conns        = 0;
         peer[i].max_fails        = 1;
         peer[i].fail_timeout     = 10;
-        *peerp                   = &peer[i];
-        peerp                    = &peer[i].next;
+#if (NGX_STREAM_UPSTREAM_TYPE)
+        peer[i].type = 0;
+#endif
+        *peerp = &peer[i];
+        peerp  = &peer[i].next;
     }
 
     us->peer.data = peers;
@@ -519,6 +528,9 @@ ngx_stream_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
     pc->sockaddr = peer->sockaddr;
     pc->socklen  = peer->socklen;
     pc->name     = &peer->name;
+#if (NGX_STREAM_UPSTREAM_TYPE)
+    pc->type = peer->type;
+#endif
 
     peer->conns++;
 

@@ -278,6 +278,9 @@ ngx_stream_upstream_get_hash_peer(ngx_peer_connection_t *pc, void *data)
     pc->sockaddr = peer->sockaddr;
     pc->socklen  = peer->socklen;
     pc->name     = &peer->name;
+#if (NGX_STREAM_UPSTREAM_TYPE)
+    pc->type = peer->type;
+#endif
 
     peer->conns++;
 
@@ -637,6 +640,9 @@ ngx_stream_upstream_get_chash_peer(ngx_peer_connection_t *pc, void *data)
     pc->sockaddr = best->sockaddr;
     pc->socklen  = best->socklen;
     pc->name     = &best->name;
+#if (NGX_STREAM_UPSTREAM_TYPE)
+    pc->type = best->type;
+#endif
 
     best->conns++;
 

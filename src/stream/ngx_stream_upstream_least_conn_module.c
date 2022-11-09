@@ -240,7 +240,9 @@ ngx_stream_upstream_get_least_conn_peer(ngx_peer_connection_t *pc, void *data)
     pc->sockaddr = best->sockaddr;
     pc->socklen  = best->socklen;
     pc->name     = &best->name;
-
+#if (NGX_STREAM_UPSTREAM_TYPE)
+    pc->type = best->type;
+#endif
     best->conns++;
 
     rrp->current = best;

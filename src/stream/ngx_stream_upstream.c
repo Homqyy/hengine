@@ -424,10 +424,13 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_stream_upstream_srv_conf_t *uscf = conf;
 
-    time_t                        fail_timeout;
-    ngx_str_t                    *value, s;
-    ngx_url_t                     u;
-    ngx_int_t                     weight, max_conns, max_fails;
+    time_t     fail_timeout;
+    ngx_str_t *value, s;
+    ngx_url_t  u;
+    ngx_int_t  weight, max_conns, max_fails;
+#if (NGX_STREAM_UPSTREAM_TYPE)
+    int type;
+#endif
     ngx_uint_t                    i;
     ngx_stream_upstream_server_t *us;
 
@@ -445,9 +448,35 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     max_conns    = 0;
     max_fails    = 1;
     fail_timeout = 10;
+#if (NGX_STREAM_UPSTREAM_TYPE)
+    type = 0; // not specified
+#endif
 
     for (i = 2; i < cf->args->nelts; i++)
     {
+#if (NGX_STREAM_UPSTREAM_TYPE)
+        if (ngx_strncmp(value[i].data, "udp", 3) == 0)
+        {
+            if (type)
+            {
+                return "duplication type. only to chooce one of tcp, udp";
+            }
+
+            type = SOCK_DGRAM;
+            continue;
+        }
+
+        if (ngx_strncmp(value[i].data, "tcp", 3) == 0)
+        {
+            if (type)
+            {
+                return "duplication type. only to chooce one of tcp, udp";
+            }
+
+            type = SOCK_STREAM;
+            continue;
+        }
+#endif
         if (ngx_strncmp(value[i].data, "weight=", 7) == 0)
         {
             if (!(uscf->flags & NGX_STREAM_UPSTREAM_WEIGHT))
@@ -575,6 +604,10 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     us->max_conns    = max_conns;
     us->max_fails    = max_fails;
     us->fail_timeout = fail_timeout;
+
+#if (NGX_STREAM_UPSTREAM_TYPE)
+    us->type = type;
+#endif
 
     return NGX_CONF_OK;
 
