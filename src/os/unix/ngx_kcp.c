@@ -7,7 +7,10 @@
 
 #include <ngx_event.h>
 
+#include <ikcp.c>
+
 #define NGX_KCP_INTERVAL_DEFAULT 5000
+
 
 static void ngx_destroy_kcp(ngx_kcp_t *kcp);
 static int  ngx_kcp_output_handler(const char *buf, int len, ikcpcb *ikcp,
@@ -29,8 +32,8 @@ ngx_kcp_send_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 {
     ngx_event_t *wev;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp send chain %d",
-                   c->kcp->number);
+    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp send chain %ud",
+                   c->kcp->conv);
 
     wev = c->write;
 
@@ -134,8 +137,8 @@ ngx_kcp_send_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 static ssize_t
 ngx_kcp_recv_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 {
-    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp recv chain %d",
-                   c->kcp->number);
+    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp recv chain %ud",
+                   c->kcp->conv);
     return NGX_ERROR;
 }
 
@@ -162,8 +165,8 @@ ngx_kcp_send(ngx_connection_t *c, u_char *b, size_t size)
         return NGX_ERROR;
     }
 
-    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp send %d:%uz bytes",
-                   kcp->number, size);
+    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp send %ud:%uz bytes",
+                   kcp->conv, size);
 
     ngx_event_kcp_update_timer(c->log, kcp);
 
@@ -180,21 +183,21 @@ ngx_kcp_recv(ngx_connection_t *c, u_char *buf, size_t size)
 
     if (kcp->close)
     {
-        ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp recv %d: closed",
-                       kcp->number);
+        ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp recv %ud: closed",
+                       kcp->conv);
         return 0;
     }
 
     n = ikcp_recv(kcp->ikcp, (char *)buf, size);
     if (n < 0)
     {
-        ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp recv %d: again",
-                       kcp->number);
+        ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp recv %ud: again",
+                       kcp->conv);
         return NGX_AGAIN;
     }
 
-    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp recv %d:%d bytes",
-                   kcp->number, n);
+    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp recv %ud:%d bytes",
+                   kcp->conv, n);
 
     return n;
 }
@@ -210,7 +213,7 @@ ngx_kcp_log(const char *log, struct IKCPCB *kcp, void *user)
 }
 
 ngx_kcp_t *
-ngx_create_kcp(ngx_connection_t *c)
+ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv)
 {
     ngx_kcp_t          *kcp;
     ikcpcb             *ikcp;
@@ -222,7 +225,7 @@ ngx_create_kcp(ngx_connection_t *c)
 
     kcp->waiting_read            = c->read->active ? 1 : 0;
     kcp->waiting_write           = c->write->active ? 1 : 0;
-    kcp->number                  = c->number;
+    kcp->conv                    = conv;
     kcp->write_handler           = ngx_kcp_write_handler;
     kcp->read_handler            = ngx_kcp_read_handler;
     kcp->max_waiting_send_number = 2048;
@@ -233,7 +236,7 @@ ngx_create_kcp(ngx_connection_t *c)
     kcp->transport_recv       = c->recv;
     kcp->transport_recv_chain = c->recv_chain;
 
-    ikcp = ikcp_create(c->number, c);
+    ikcp = ikcp_create(conv, c);
     if (ikcp == NULL) return NULL;
 
     ikcp_setoutput(ikcp, ngx_kcp_output_handler);
@@ -432,4 +435,15 @@ static void
 ngx_destroy_kcp(ngx_kcp_t *kcp)
 {
     ikcp_release(kcp->ikcp);
+}
+
+ngx_uint_t
+ngx_get_kcp_conv(u_char *buffer, size_t size)
+{
+    if (size < IKCP_OVERHEAD)
+    {
+        return 0;
+    }
+
+    return ikcp_getconv(buffer);
 }

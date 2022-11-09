@@ -400,7 +400,16 @@ ngx_event_recvmsg(ngx_event_t *ev)
 #if (NGX_KCP)
         if (ls->kcp)
         {
-            c->kcp = ngx_create_kcp(c);
+            ngx_uint_t conv = ngx_get_kcp_conv(buffer, n);
+            if (conv == 0)
+            {
+                ngx_log_debug0(NGX_LOG_DEBUG_EVENT, log, 0,
+                               "get kcp conv failed");
+                ngx_close_accepted_udp_connection(c);
+                return;
+            }
+
+            c->kcp = ngx_create_kcp(c, conv);
             if (c->kcp == NULL)
             {
                 ngx_close_accepted_udp_connection(c);
