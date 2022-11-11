@@ -13,6 +13,7 @@
 
 struct ngx_kcp_s
 {
+    ngx_log_t        *log;
     ikcpcb           *ikcp;
     ngx_uint_t        conv;
     ngx_rbtree_node_t timer;
