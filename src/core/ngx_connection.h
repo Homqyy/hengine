@@ -57,6 +57,10 @@ struct ngx_listening_s
 
     ngx_uint_t worker;
 
+#if (NGX_KCP)
+    ngx_uint_t kcp_mode;
+#endif
+
     unsigned open   : 1;
     unsigned remain : 1;
     unsigned ignore : 1;

@@ -409,7 +409,7 @@ ngx_event_recvmsg(ngx_event_t *ev)
                 return;
             }
 
-            c->kcp = ngx_create_kcp(c, conv);
+            c->kcp = ngx_create_kcp(c, conv, ls->kcp_mode);
             if (c->kcp == NULL)
             {
                 ngx_close_accepted_udp_connection(c);

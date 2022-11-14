@@ -10,12 +10,15 @@
 
 #include <ikcp.h>
 
+#define NGX_KCP_NORMAL_MODE 0
+#define NGX_KCP_QUICK_MODE  1
 
 struct ngx_kcp_s
 {
     ngx_log_t        *log;
     ikcpcb           *ikcp;
     ngx_uint_t        conv;
+    ngx_uint_t        mode;
     ngx_rbtree_node_t timer;
     ngx_int_t         max_waiting_send_number;
     ngx_int_t         valve_of_send;
@@ -34,8 +37,10 @@ struct ngx_kcp_s
     unsigned waiting_write : 1;
 };
 
-ngx_kcp_t *ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv);
+ngx_kcp_t *ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv,
+                          ngx_uint_t mode);
 ngx_uint_t ngx_get_kcp_conv(u_char *buffer, size_t size);
 #define ngx_kcp_get_conv(kcp) (kcp->conv)
+#define ngx_kcp_get_mode(kcp) (kcp->mode)
 
 #endif //!_NGX_KCP_H_INCLUDED_

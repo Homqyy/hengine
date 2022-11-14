@@ -50,6 +50,10 @@ typedef struct
     /* server ctx */
     ngx_stream_conf_ctx_t *ctx;
 
+#if (NGX_KCP)
+    ngx_uint_t kcp_mode;
+#endif
+
     unsigned bind     : 1;
     unsigned wildcard : 1;
     unsigned ssl      : 1;

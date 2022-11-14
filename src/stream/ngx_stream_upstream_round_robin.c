@@ -119,8 +119,9 @@ ngx_stream_upstream_init_round_robin(ngx_conf_t                     *cf,
                 peer[n].type = server[i].type;
 #endif
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
-                peer[n].kcp  = server[i].kcp;
-                peer[n].conv = server[i].conv;
+                peer[n].kcp      = server[i].kcp;
+                peer[n].conv     = server[i].conv;
+                peer[n].kcp_mode = server[i].kcp_mode;
 #endif
 
                 *peerp = &peer[n];
@@ -198,8 +199,9 @@ ngx_stream_upstream_init_round_robin(ngx_conf_t                     *cf,
                 peer[n].type = server[i].type;
 #endif
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
-                peer[n].kcp  = server[i].kcp;
-                peer[n].conv = server[i].conv;
+                peer[n].kcp      = server[i].kcp;
+                peer[n].conv     = server[i].conv;
+                peer[n].kcp_mode = server[i].kcp_mode;
 #endif
 
                 *peerp = &peer[n];
@@ -278,8 +280,9 @@ ngx_stream_upstream_init_round_robin(ngx_conf_t                     *cf,
         peer[i].type = 0;
 #endif
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
-        peer[i].kcp  = -1;
-        peer[i].conv = 0;
+        peer[i].kcp      = -1;
+        peer[i].conv     = 0;
+        peer[i].kcp_mode = NGX_KCP_NORMAL_MODE;
 #endif
         *peerp = &peer[i];
         peerp  = &peer[i].next;
@@ -546,8 +549,9 @@ ngx_stream_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
     if (peer->kcp != -1)
     {
-        pc->kcp  = peer->kcp;
-        pc->conv = peer->conv;
+        pc->kcp      = peer->kcp;
+        pc->conv     = peer->conv;
+        pc->kcp_mode = peer->kcp_mode;
     }
 #endif
 

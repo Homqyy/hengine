@@ -71,6 +71,7 @@ struct ngx_peer_connection_s
 
 #if (NGX_KCP)
     ngx_uint_t conv;
+    ngx_uint_t kcp_mode;
     unsigned   kcp : 1;
 #endif
 

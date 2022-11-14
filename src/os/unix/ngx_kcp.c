@@ -9,8 +9,6 @@
 
 #include <ikcp.c>
 
-#define NGX_KCP_INTERVAL_DEFAULT 10
-
 
 static void ngx_destroy_kcp(ngx_kcp_t *kcp);
 static int  ngx_kcp_output_handler(const char *buf, int len, ikcpcb *ikcp,
@@ -215,7 +213,7 @@ ngx_kcp_log(const char *log, struct IKCPCB *kcp, void *user)
 }
 
 ngx_kcp_t *
-ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv)
+ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv, ngx_uint_t mode)
 {
     ngx_kcp_t          *kcp;
     ikcpcb             *ikcp;
@@ -225,6 +223,7 @@ ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv)
     kcp = ngx_pcalloc(c->pool, sizeof(ngx_kcp_t));
     if (kcp == NULL) return NULL;
 
+    kcp->mode                    = mode;
     kcp->log                     = c->log;
     kcp->waiting_read            = c->read->active ? 1 : 0;
     kcp->waiting_write           = c->write->active ? 1 : 0;
@@ -243,7 +242,13 @@ ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv)
     if (ikcp == NULL) return NULL;
 
     ikcp_setoutput(ikcp, ngx_kcp_output_handler);
-    ikcp_nodelay(ikcp, 1, NGX_KCP_INTERVAL_DEFAULT, 2, 1);
+
+    switch (mode)
+    {
+    case NGX_KCP_NORMAL_MODE: ikcp_nodelay(ikcp, 0, 40, 0, 0); break;
+    case NGX_KCP_QUICK_MODE: ikcp_nodelay(ikcp, 1, 10, 2, 1); break;
+    }
+
     ikcp_wndsize(ikcp, 1024, 1024);
 
     ikcp->logmask  = 0xfffffff;
@@ -290,6 +295,9 @@ ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv)
     ngx_event_kcp_add_timer(c->log, kcp);
 
     kcp->ikcp = ikcp;
+
+    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
+                   "create kcp %d, and mode is %ud", kcp->conv, kcp->mode);
 
     return kcp;
 }
@@ -440,6 +448,9 @@ error:
 static void
 ngx_destroy_kcp(ngx_kcp_t *kcp)
 {
+    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
+                   "destroy kcp %d, and mode is %ud", kcp->conv, kcp->mode);
+
     ngx_event_kcp_del_timer(kcp->log, kcp);
     ikcp_release(kcp->ikcp);
 }

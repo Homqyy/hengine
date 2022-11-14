@@ -703,6 +703,10 @@ ngx_stream_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ls->ipv6only = 1;
 #endif
 
+#if (NGX_KCP)
+    ls->kcp_mode = NGX_KCP_NORMAL_MODE;
+#endif
+
     backlog = 0;
 
     for (i = 2; i < cf->args->nelts; i++)
@@ -715,9 +719,29 @@ ngx_stream_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
 #if (NGX_KCP)
-        if (ngx_strcmp(value[i].data, "kcp") == 0)
+        if (ngx_strncmp(value[i].data, "kcp", 3) == 0)
         {
             ls->kcp = 1;
+
+            u_char *p = value[i].data + 3;
+            if (*p++ == '=')
+            {
+                if (ngx_strcmp(p, "normal") == 0)
+                {
+                    ls->kcp_mode = NGX_KCP_NORMAL_MODE;
+                }
+                else if (ngx_strcmp(p, "quick") == 0)
+                {
+                    ls->kcp_mode = NGX_KCP_QUICK_MODE;
+                }
+                else
+                {
+                    ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                       "invalid kcp mode \"%s\"", p);
+                    return NGX_CONF_ERROR;
+                }
+            }
+
             continue;
         }
 #endif // if (NGX_KCP)

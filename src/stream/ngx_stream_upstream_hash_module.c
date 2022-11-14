@@ -284,8 +284,9 @@ ngx_stream_upstream_get_hash_peer(ngx_peer_connection_t *pc, void *data)
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
     if (peer->kcp != -1)
     {
-        pc->kcp  = peer->kcp;
-        pc->conv = peer->conv;
+        pc->kcp      = peer->kcp;
+        pc->conv     = peer->conv;
+        pc->kcp_mode = peer->kcp_mode;
     }
 #endif
 
@@ -653,8 +654,9 @@ ngx_stream_upstream_get_chash_peer(ngx_peer_connection_t *pc, void *data)
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
     if (best->kcp != -1)
     {
-        pc->kcp  = best->kcp;
-        pc->conv = best->conv;
+        pc->kcp      = best->kcp;
+        pc->conv     = best->conv;
+        pc->kcp_mode = best->kcp_mode;
     }
 #endif
 

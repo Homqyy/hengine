@@ -70,6 +70,7 @@ typedef struct
 #if (NGX_STREAM_UPSTREAM_TYPE && NGX_KCP)
     int        kcp;
     ngx_uint_t conv;
+    ngx_uint_t kcp_mode;
 #endif
     unsigned backup : 1;
 

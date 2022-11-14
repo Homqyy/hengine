@@ -246,8 +246,9 @@ ngx_stream_upstream_get_least_conn_peer(ngx_peer_connection_t *pc, void *data)
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
     if (best->kcp != -1)
     {
-        pc->kcp  = best->kcp;
-        pc->conv = best->conv;
+        pc->kcp      = best->kcp;
+        pc->conv     = best->conv;
+        pc->kcp_mode = best->kcp_mode;
     }
 #endif
     best->conns++;

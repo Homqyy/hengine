@@ -55,6 +55,7 @@ struct ngx_stream_upstream_rr_peer_s
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
     int        kcp;
     ngx_uint_t conv;
+    ngx_uint_t kcp_mode;
 #endif
 
     ngx_stream_upstream_rr_peer_t *next;

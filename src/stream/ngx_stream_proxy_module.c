@@ -361,13 +361,15 @@ ngx_stream_proxy_handler(ngx_stream_session_t *s)
 #if (NGX_KCP)
     if (c->kcp)
     {
-        u->peer.kcp  = 1;
-        u->peer.conv = ngx_kcp_get_conv(c->kcp);
+        u->peer.kcp      = 1;
+        u->peer.kcp_mode = ngx_kcp_get_mode(c->kcp);
+        u->peer.conv     = ngx_kcp_get_conv(c->kcp);
     }
     else
     {
-        u->peer.kcp  = 0;
-        u->peer.conv = 0;
+        u->peer.kcp      = 0;
+        u->peer.conv     = 0;
+        u->peer.kcp_mode = NGX_KCP_NORMAL_MODE;
     }
 #endif
     u->start_sec = ngx_time();
@@ -764,7 +766,7 @@ ngx_stream_proxy_init_upstream(ngx_stream_session_t *s)
 #if (NGX_KCP)
     if (u->peer.kcp)
     {
-        pc->kcp = ngx_create_kcp(pc, u->peer.conv);
+        pc->kcp = ngx_create_kcp(pc, u->peer.conv, u->peer.kcp_mode);
         if (pc->kcp == NULL)
         {
             ngx_stream_proxy_finalize(s, NGX_STREAM_INTERNAL_SERVER_ERROR);

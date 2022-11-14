@@ -434,6 +434,7 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
     int        kcp;
     ngx_uint_t conv;
+    ngx_int_t  kcp_mode;
 #endif
     ngx_uint_t                    i;
     ngx_stream_upstream_server_t *us;
@@ -456,8 +457,9 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     type = 0; // not specified
 #endif
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
-    kcp  = -1; // not specified
-    conv = 0;
+    kcp      = -1; // not specified
+    conv     = 0;
+    kcp_mode = -1;
 #endif
 
     for (i = 2; i < cf->args->nelts; i++)
@@ -474,6 +476,29 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             {
                 return "invalid kcp conv value. must is number and greater "
                        "than 0.";
+            }
+
+            continue;
+        }
+
+        if (ngx_strncmp(value[i].data, "kcp_mode=", 9) == 0)
+        {
+            u_char *p = value[i].data + 9;
+            if (ngx_strcmp(p, "normal") == 0)
+            {
+                kcp_mode = NGX_KCP_NORMAL_MODE;
+            }
+            else if (ngx_strcmp(p, "quick") == 0)
+            {
+                kcp_mode = NGX_KCP_QUICK_MODE;
+            }
+            else
+            {
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                   "invalid kcp mode \"%s\". To choose one of "
+                                   "\'normal\', \'quick\'",
+                                   p);
+                return NGX_CONF_ERROR;
             }
 
             continue;
@@ -601,17 +626,25 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
-    if (type)
+    if (kcp == 1 && type != SOCK_DGRAM)
     {
-        if (kcp == 1 && type != SOCK_DGRAM)
+        if (type != SOCK_DGRAM)
         {
             return "kcp must upon udp";
         }
+    }
 
-        if (kcp == -1)
-        {
-            kcp = 0; // no kcp
-        }
+    if (type && kcp == -1)
+    {
+        kcp = 0; // no kcp
+    }
+
+    if (kcp != 1 && kcp_mode != -1)
+    {
+        ngx_conf_log_error(
+            NGX_LOG_WARN, cf, 0,
+            "kcp mode was only supported by kcp, but "
+            "kcp is not be configured. So kcp mode will be ignore");
     }
 #endif
 
@@ -649,8 +682,9 @@ ngx_stream_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     us->type = type;
 #endif
 #if (NGX_KCP && NGX_STREAM_UPSTREAM_TYPE)
-    us->kcp  = kcp;
-    us->conv = conv;
+    us->kcp      = kcp;
+    us->conv     = conv;
+    us->kcp_mode = kcp_mode;
 #endif
 
     return NGX_CONF_OK;

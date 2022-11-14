@@ -778,7 +778,8 @@ ngx_stream_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports)
 #endif
 
 #if (NGX_KCP)
-            ls->kcp = addr[i].opt.kcp;
+            ls->kcp      = addr[i].opt.kcp;
+            ls->kcp_mode = addr[i].opt.kcp_mode;
 #endif
 
             stport = ngx_palloc(cf->pool, sizeof(ngx_stream_port_t));
