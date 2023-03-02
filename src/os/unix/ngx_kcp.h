@@ -35,6 +35,7 @@ struct ngx_kcp_s
     unsigned error         : 1;
     unsigned waiting_read  : 1;
     unsigned waiting_write : 1;
+    unsigned write_active  : 1;
 };
 
 ngx_kcp_t *ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv,

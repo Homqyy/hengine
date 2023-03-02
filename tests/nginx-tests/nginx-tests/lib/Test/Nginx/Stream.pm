@@ -77,6 +77,28 @@ sub write {
 	}
 }
 
+sub send
+{
+	my ($self, $message, %extra) = @_;
+	my $s = $self->{_socket};
+
+	local $SIG{PIPE} = 'IGNORE';
+
+	$s->blocking(0);
+	while (IO::Select->new($s)->can_write($extra{write_timeout} || 1.5)) {
+		my $n = $s->send($message, 0);
+		log_out(substr($message, 0, $n));
+		last unless $n;
+
+		$message = substr($message, $n);
+		last unless length $message;
+	}
+
+	if (length $message) {
+		$s->close();
+	}
+}
+
 sub read {
 	my ($self, %extra) = @_;
 	my ($s, $buf);
@@ -86,6 +108,21 @@ sub read {
 	$s->blocking(0);
 	if (IO::Select->new($s)->can_read($extra{read_timeout} || 5)) {
 		$s->sysread($buf, 1024);
+	};
+
+	log_in($buf);
+	return $buf;
+}
+
+sub recv {
+	my ($self, %extra) = @_;
+	my ($s, $buf);
+
+	$s = $self->{_socket};
+
+	$s->blocking(0);
+	if (IO::Select->new($s)->can_read($extra{read_timeout} || 5)) {
+		$s->recv($buf, 1024);
 	};
 
 	log_in($buf);

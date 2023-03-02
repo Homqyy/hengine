@@ -108,11 +108,11 @@ ngx_event_kcp_handler(ngx_event_t *ev)
     ngx_connection_t *c   = ev->data;
     ngx_kcp_t        *kcp = c->kcp;
 
-    ngx_log_debug5(NGX_LOG_DEBUG_EVENT, ev->log, 0,
+    ngx_log_debug6(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                    "kcp handler: %ud, close: %d, error: %d, waiting_read: %d, "
-                   "waiting_write: %d",
+                   "waiting_write: %d, fd: %d",
                    kcp->conv, kcp->close, kcp->error, kcp->waiting_read,
-                   kcp->waiting_write);
+                   kcp->waiting_write, c->fd);
 
     if (ev->timedout || c->error || c->close)
     {

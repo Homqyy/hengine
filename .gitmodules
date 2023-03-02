@@ -3,4 +3,4 @@
 	url = https://gitee.com/homqyy/tools-dev.git
 [submodule "auto/lib/kcp/src"]
 	path = auto/lib/kcp/src
-	url = https://github.com/skywind3000/kcp
+	url = https://github.com/skywind3000/kcp.git

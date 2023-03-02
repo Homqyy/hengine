@@ -127,6 +127,7 @@ sub has_module($) {
 		mirror	=> '(?s)^(?!.*--without-http_mirror_module)',
 		userid	=> '(?s)^(?!.*--without-http_userid_module)',
 		access	=> '(?s)^(?!.*--without-http_access_module)',
+		kcp => '--with-kcp',
 		auth_basic
 			=> '(?s)^(?!.*--without-http_auth_basic_module)',
 		autoindex

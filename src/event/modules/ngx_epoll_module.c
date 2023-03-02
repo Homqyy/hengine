@@ -625,6 +625,9 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
         {
             c->kcp->waiting_write = 1;
         }
+
+        ev->active = 1;
+
         return NGX_OK;
     }
 #endif
@@ -710,6 +713,9 @@ ngx_epoll_del_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
         {
             c->kcp->waiting_write = 0;
         }
+
+        ev->active = 0;
+
         return NGX_OK;
     }
 #endif
@@ -779,6 +785,9 @@ ngx_epoll_add_connection(ngx_connection_t *c)
     {
         c->kcp->waiting_read  = 1;
         c->kcp->waiting_write = 1;
+
+        c->read->active  = 1;
+        c->write->active = 1;
         return NGX_OK;
     }
 #endif
@@ -814,6 +823,9 @@ ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
     {
         c->kcp->waiting_read  = 0;
         c->kcp->waiting_write = 0;
+
+        c->read->active  = 0;
+        c->write->active = 0;
         return NGX_OK;
     }
 #endif

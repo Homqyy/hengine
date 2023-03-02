@@ -167,6 +167,8 @@ ngx_kcp_send(ngx_connection_t *c, u_char *b, size_t size)
     ngx_log_debug3(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp send #%d %ud:%uz bytes",
                    c->fd, kcp->conv, size);
 
+    ikcp_flush(kcp->ikcp);
+
     ngx_event_kcp_update_timer(c->log, kcp);
 
     return size;
@@ -268,6 +270,13 @@ ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv, ngx_uint_t mode)
         }
 
         c->buffer->pos += n;
+
+        if (ikcp_peeksize(ikcp))
+        {
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp ready to read");
+
+            c->read->ready = 1;
+        }
     }
 
     if (!c->read->active
@@ -291,13 +300,17 @@ ngx_create_kcp(ngx_connection_t *c, ngx_uint_t conv, ngx_uint_t mode)
     c->send_chain = ngx_kcp_send_chain;
     c->recv       = ngx_kcp_recv;
     c->recv_chain = ngx_kcp_recv_chain;
-
-    ngx_event_kcp_add_timer(c->log, kcp);
+    c->kcp        = kcp;
 
     kcp->ikcp = ikcp;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
-                   "create kcp %d, and mode is %ud", kcp->conv, kcp->mode);
+    ngx_event_kcp_add_timer(c->log, kcp);
+
+    ikcp_update(ikcp, ngx_current_msec); // immediately active it
+
+    ngx_log_debug3(NGX_LOG_DEBUG_EVENT, c->log, 0,
+                   "create kcp %d, and mode is %ud on fd %d", kcp->conv,
+                   kcp->mode, c->fd);
 
     return kcp;
 }
@@ -308,11 +321,23 @@ ngx_kcp_write_handler(ngx_connection_t *c)
     ngx_kcp_t *kcp = c->kcp;
     ngx_int_t  n   = NGX_MAX_INT32_VALUE;
 
-    if (c->write->active
-        && ngx_del_event(c->write, NGX_WRITE_EVENT, 0) == NGX_ERROR)
+    ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp write handler");
+
+    if (kcp->write_active)
     {
-        kcp->error = 1;
-        goto done;
+        c->kcp = NULL;
+
+        if (ngx_del_event(c->write, NGX_WRITE_EVENT, 0) == NGX_ERROR)
+        {
+            kcp->error = 1;
+
+            c->kcp = kcp;
+            goto done;
+        }
+
+        kcp->write_active = 0;
+
+        c->kcp = kcp;
     }
 
     ikcp_flush(kcp->ikcp);
@@ -328,11 +353,23 @@ done:
     if (kcp->waiting_write && c->write->handler
         && (n < kcp->valve_of_send || kcp->error))
     {
+        ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
+                       "exec write handler of connection");
+
         unsigned old = c->write->ready;
 
         c->write->ready = 1; // set 'ready=1' to notify above layer to write
         c->write->handler(c->write);
         c->write->ready = old; // recover
+    }
+    else
+    {
+        ngx_log_debug4(NGX_LOG_DEBUG_EVENT, c->log, 0,
+                       "don't exec connection write handler: %p, "
+                       "waiting_write: %d, waitsnd: %d, "
+                       "value_of_send: %d",
+                       c->write->handler, kcp->waiting_write, n,
+                       kcp->valve_of_send);
     }
 }
 
@@ -342,6 +379,8 @@ ngx_kcp_read_handler(ngx_connection_t *c)
     ngx_kcp_t *kcp = c->kcp;
     ssize_t    n;
     u_char     buffer[65536];
+
+    ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0, "kcp read handler");
 
     while (1)
     {
@@ -391,11 +430,22 @@ ngx_kcp_read_handler(ngx_connection_t *c)
     if (kcp->waiting_read && c->read->handler
         && (0 < ikcp_peeksize(kcp->ikcp) || kcp->error || kcp->close))
     {
+        ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
+                       "exec read handler of connection");
+
         unsigned old = c->read->ready;
 
         c->read->ready = 1; // set 'ready=1' to notify above layer to read
         c->read->handler(c->read);
         c->read->ready = old; // recover
+    }
+    else
+    {
+        ngx_log_debug3(NGX_LOG_DEBUG_EVENT, c->log, 0,
+                       "don't exec connection read handler: %p, "
+                       "waiting_read: %d, waitsize: %d",
+                       c->read->handler, kcp->waiting_read,
+                       ikcp_peeksize(kcp->ikcp));
     }
 }
 
@@ -409,7 +459,7 @@ ngx_kcp_output_handler(const char *buf, int len, ikcpcb *ikcp, void *user)
     n = kcp->transport_send(c, (u_char *)buf, len);
     if (0 < n)
     {
-        ngx_log_error(NGX_LOG_ERR, c->log, 0, "#%d kcp ouput %z bytes", c->fd,
+        ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "#%d kcp ouput %z bytes", c->fd,
                       n);
 
         if (n != len)
@@ -424,10 +474,19 @@ ngx_kcp_output_handler(const char *buf, int len, ikcpcb *ikcp, void *user)
     }
     else if (n == NGX_AGAIN)
     {
-        if (!c->write->active
-            && ngx_add_event(c->write, NGX_WRITE_EVENT, 0) != NGX_ERROR)
+        if (!kcp->write_active)
         {
-            goto error;
+            c->kcp = NULL;
+
+            if (ngx_add_event(c->write, NGX_WRITE_EVENT, 0) != NGX_ERROR)
+            {
+                c->kcp = kcp;
+                goto error;
+            }
+
+            kcp->write_active = 1;
+
+            c->kcp = kcp;
         }
 
         return 0;
@@ -448,7 +507,7 @@ error:
 static void
 ngx_destroy_kcp(ngx_kcp_t *kcp)
 {
-    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
+    ngx_log_debug2(NGX_LOG_DEBUG_EVENT, kcp->log, 0,
                    "destroy kcp %d, and mode is %ud", kcp->conv, kcp->mode);
 
     ngx_event_kcp_del_timer(kcp->log, kcp);
