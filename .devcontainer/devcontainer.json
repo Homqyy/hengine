@@ -15,7 +15,9 @@
 				"ms-vscode.cpptools",
 				"ms-vscode.cpptools-themes",
 				"Gruntfuggly.todo-tree",
-				"cschlosser.doxdocgen"
+				"cschlosser.doxdocgen",
+				"cfgweb.vscode-perl",
+				"richterger.perl"
 			]
 		}
 	},

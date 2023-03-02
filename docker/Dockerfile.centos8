@@ -9,4 +9,7 @@ LABEL cn.homqyy.docker.email=yilupiaoxuewhq@163.com
 
 USER root:root
 
-RUN yum install -y clang-tools-extra pcre-devel openssl-devel
+RUN yum install -y clang-tools-extra pcre-devel openssl-devel \
+    cpan perl-Test-Harness
+
+# RUN cpan -i Inline Inline::C

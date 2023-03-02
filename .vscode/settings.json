@@ -33,6 +33,7 @@
         "system_error": "c",
         "tuple": "c",
         "typeinfo": "c",
-        "stdexcept": "c"
+        "stdexcept": "c",
+        "string": "c"
     }
 }
