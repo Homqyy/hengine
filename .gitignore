@@ -2,3 +2,4 @@ Makefile
 objs/
 tags
 build
+.vstags
