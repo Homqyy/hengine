@@ -46,9 +46,9 @@ ngx_thread_tid(void)
 ngx_tid_t
 ngx_thread_tid(void)
 {
-    uint64_t tid;
+    uint64_t  tid;
 
-    (void)pthread_threadid_np(NULL, &tid);
+    (void) pthread_threadid_np(NULL, &tid);
     return tid;
 }
 
@@ -64,7 +64,7 @@ ngx_thread_tid(void)
 ngx_tid_t
 ngx_thread_tid(void)
 {
-    return (uint64_t)(uintptr_t)pthread_self();
+    return (uint64_t) (uintptr_t) pthread_self();
 }
 
 #endif

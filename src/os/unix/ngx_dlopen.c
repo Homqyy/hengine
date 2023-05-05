@@ -14,12 +14,11 @@
 char *
 ngx_dlerror(void)
 {
-    char *err;
+    char  *err;
 
-    err = (char *)dlerror();
+    err = (char *) dlerror();
 
-    if (err == NULL)
-    {
+    if (err == NULL) {
         return "";
     }
 

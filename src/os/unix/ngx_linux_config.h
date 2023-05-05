@@ -10,16 +10,16 @@
 
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE /* pread(), pwrite(), gethostname() */
+#define _GNU_SOURCE             /* pread(), pwrite(), gethostname() */
 #endif
 
-#define _FILE_OFFSET_BITS 64
+#define _FILE_OFFSET_BITS  64
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <stddef.h> /* offsetof() */
+#include <stddef.h>             /* offsetof() */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -30,7 +30,7 @@
 #include <grp.h>
 #include <dirent.h>
 #include <glob.h>
-#include <sys/vfs.h> /* statfs() */
+#include <sys/vfs.h>            /* statfs() */
 
 #include <sys/uio.h>
 #include <sys/stat.h>
@@ -43,17 +43,17 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h> /* TCP_NODELAY, TCP_CORK */
+#include <netinet/tcp.h>        /* TCP_NODELAY, TCP_CORK */
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/un.h>
 
-#include <time.h>   /* tzset() */
-#include <malloc.h> /* memalign() */
-#include <limits.h> /* IOV_MAX */
+#include <time.h>               /* tzset() */
+#include <malloc.h>             /* memalign() */
+#include <limits.h>             /* IOV_MAX */
 #include <sys/ioctl.h>
 #include <crypt.h>
-#include <sys/utsname.h> /* uname() */
+#include <sys/utsname.h>        /* uname() */
 
 #include <dlfcn.h>
 
@@ -75,7 +75,7 @@
 #include <sys/sendfile.h>
 #else
 extern ssize_t sendfile(int s, int fd, int32_t *offset, size_t size);
-#define NGX_SENDFILE_LIMIT 0x80000000
+#define NGX_SENDFILE_LIMIT  0x80000000
 #endif
 
 
@@ -95,7 +95,7 @@ extern ssize_t sendfile(int s, int fd, int32_t *offset, size_t size);
 #include <sys/syscall.h>
 #if (NGX_HAVE_FILE_AIO)
 #include <linux/aio_abi.h>
-typedef struct iocb ngx_aiocb_t;
+typedef struct iocb  ngx_aiocb_t;
 #endif
 
 
@@ -104,21 +104,21 @@ typedef struct iocb ngx_aiocb_t;
 #endif
 
 
-#define NGX_LISTEN_BACKLOG 511
+#define NGX_LISTEN_BACKLOG        511
 
 
 #ifndef NGX_HAVE_SO_SNDLOWAT
 /* setsockopt(SO_SNDLOWAT) returns ENOPROTOOPT */
-#define NGX_HAVE_SO_SNDLOWAT 0
+#define NGX_HAVE_SO_SNDLOWAT         0
 #endif
 
 
 #ifndef NGX_HAVE_INHERITED_NONBLOCK
-#define NGX_HAVE_INHERITED_NONBLOCK 0
+#define NGX_HAVE_INHERITED_NONBLOCK  0
 #endif
 
 
-#define NGX_HAVE_OS_SPECIFIC_INIT 1
+#define NGX_HAVE_OS_SPECIFIC_INIT    1
 #define ngx_debug_init()
 
 

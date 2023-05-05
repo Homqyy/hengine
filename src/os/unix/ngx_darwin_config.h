@@ -9,7 +9,7 @@
 #define _NGX_DARWIN_CONFIG_H_INCLUDED_
 
 
-#define __APPLE_USE_RFC_3542 /* IPV6_PKTINFO */
+#define __APPLE_USE_RFC_3542    /* IPV6_PKTINFO */
 
 
 #include <sys/types.h>
@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <stdarg.h>
-#include <stddef.h> /* offsetof() */
+#include <stddef.h>             /* offsetof() */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -28,9 +28,9 @@
 #include <grp.h>
 #include <dirent.h>
 #include <glob.h>
-#include <sys/mount.h> /* statfs() */
+#include <sys/mount.h>          /* statfs() */
 
-#include <sys/filio.h> /* FIONBIO */
+#include <sys/filio.h>          /* FIONBIO */
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
@@ -43,7 +43,7 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h> /* TCP_NODELAY */
+#include <netinet/tcp.h>        /* TCP_NODELAY */
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/un.h>
@@ -55,7 +55,7 @@
 
 
 #ifndef IOV_MAX
-#define IOV_MAX 64
+#define IOV_MAX   64
 #endif
 
 
@@ -77,21 +77,21 @@
 #endif
 
 
-#define NGX_LISTEN_BACKLOG -1
+#define NGX_LISTEN_BACKLOG  -1
 
 
 #ifndef NGX_HAVE_INHERITED_NONBLOCK
-#define NGX_HAVE_INHERITED_NONBLOCK 1
+#define NGX_HAVE_INHERITED_NONBLOCK  1
 #endif
 
 
 #ifndef NGX_HAVE_CASELESS_FILESYSTEM
-#define NGX_HAVE_CASELESS_FILESYSTEM 1
+#define NGX_HAVE_CASELESS_FILESYSTEM  1
 #endif
 
 
-#define NGX_HAVE_OS_SPECIFIC_INIT 1
-#define NGX_HAVE_DEBUG_MALLOC     1
+#define NGX_HAVE_OS_SPECIFIC_INIT    1
+#define NGX_HAVE_DEBUG_MALLOC        1
 
 
 extern char **environ;

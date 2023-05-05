@@ -10,41 +10,38 @@
 #include <ngx_event.h>
 
 
-extern int ngx_kqueue;
+extern int  ngx_kqueue;
 
 
 ssize_t
 ngx_aio_write(ngx_connection_t *c, u_char *buf, size_t size)
 {
-    int          n;
-    ngx_event_t *wev;
+    int           n;
+    ngx_event_t  *wev;
 
     wev = c->write;
 
-    if (!wev->ready)
-    {
+    if (!wev->ready) {
         return NGX_AGAIN;
     }
 
-    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, wev->log, 0, "aio: wev->complete: %d",
-                   wev->complete);
+    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, wev->log, 0,
+                   "aio: wev->complete: %d", wev->complete);
 
-    if (!wev->complete)
-    {
+    if (!wev->complete) {
         ngx_memzero(&wev->aiocb, sizeof(struct aiocb));
 
         wev->aiocb.aio_fildes = c->fd;
-        wev->aiocb.aio_buf    = buf;
+        wev->aiocb.aio_buf = buf;
         wev->aiocb.aio_nbytes = size;
 
 #if (NGX_HAVE_KQUEUE)
-        wev->aiocb.aio_sigevent.sigev_notify_kqueue    = ngx_kqueue;
-        wev->aiocb.aio_sigevent.sigev_notify           = SIGEV_KEVENT;
+        wev->aiocb.aio_sigevent.sigev_notify_kqueue = ngx_kqueue;
+        wev->aiocb.aio_sigevent.sigev_notify = SIGEV_KEVENT;
         wev->aiocb.aio_sigevent.sigev_value.sigval_ptr = wev;
 #endif
 
-        if (aio_write(&wev->aiocb) == -1)
-        {
+        if (aio_write(&wev->aiocb) == -1) {
             ngx_log_error(NGX_LOG_CRIT, wev->log, ngx_errno,
                           "aio_write() failed");
             return NGX_ERROR;
@@ -53,25 +50,21 @@ ngx_aio_write(ngx_connection_t *c, u_char *buf, size_t size)
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, wev->log, 0, "aio_write: OK");
 
         wev->active = 1;
-        wev->ready  = 0;
+        wev->ready = 0;
     }
 
     wev->complete = 0;
 
     n = aio_error(&wev->aiocb);
-    if (n == -1)
-    {
+    if (n == -1) {
         ngx_log_error(NGX_LOG_CRIT, wev->log, ngx_errno, "aio_error() failed");
         wev->error = 1;
         return NGX_ERROR;
     }
 
-    if (n != 0)
-    {
-        if (n == NGX_EINPROGRESS)
-        {
-            if (wev->ready)
-            {
+    if (n != 0) {
+        if (n == NGX_EINPROGRESS) {
+            if (wev->ready) {
                 ngx_log_error(NGX_LOG_ALERT, wev->log, n,
                               "aio_write() still in progress");
                 wev->ready = 0;
@@ -85,8 +78,7 @@ ngx_aio_write(ngx_connection_t *c, u_char *buf, size_t size)
 
 #if 1
         n = aio_return(&wev->aiocb);
-        if (n == -1)
-        {
+        if (n == -1) {
             ngx_log_error(NGX_LOG_ALERT, wev->log, ngx_errno,
                           "aio_return() failed");
         }
@@ -98,8 +90,7 @@ ngx_aio_write(ngx_connection_t *c, u_char *buf, size_t size)
     }
 
     n = aio_return(&wev->aiocb);
-    if (n == -1)
-    {
+    if (n == -1) {
         ngx_log_error(NGX_LOG_ALERT, wev->log, ngx_errno,
                       "aio_return() failed");
 
@@ -112,7 +103,7 @@ ngx_aio_write(ngx_connection_t *c, u_char *buf, size_t size)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, wev->log, 0, "aio_write: %d", n);
 
     wev->active = 0;
-    wev->ready  = 1;
+    wev->ready = 1;
 
     return n;
 }

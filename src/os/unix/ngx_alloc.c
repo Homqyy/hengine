@@ -9,21 +9,20 @@
 #include <ngx_core.h>
 
 
-ngx_uint_t ngx_pagesize;
-ngx_uint_t ngx_pagesize_shift;
-ngx_uint_t ngx_cacheline_size;
+ngx_uint_t  ngx_pagesize;
+ngx_uint_t  ngx_pagesize_shift;
+ngx_uint_t  ngx_cacheline_size;
 
 
 void *
 ngx_alloc(size_t size, ngx_log_t *log)
 {
-    void *p;
+    void  *p;
 
     p = malloc(size);
-    if (p == NULL)
-    {
-        ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "malloc(%uz) failed",
-                      size);
+    if (p == NULL) {
+        ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
+                      "malloc(%uz) failed", size);
     }
 
     ngx_log_debug2(NGX_LOG_DEBUG_ALLOC, log, 0, "malloc: %p:%uz", p, size);
@@ -35,12 +34,11 @@ ngx_alloc(size_t size, ngx_log_t *log)
 void *
 ngx_calloc(size_t size, ngx_log_t *log)
 {
-    void *p;
+    void  *p;
 
     p = ngx_alloc(size, log);
 
-    if (p)
-    {
+    if (p) {
         ngx_memzero(p, size);
     }
 
@@ -55,10 +53,9 @@ ngx_realloc(void *p, size_t size, ngx_log_t *log)
     void *new;
 
     new = realloc(p, size);
-    if (new == NULL)
-    {
-        ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "realloc(%p:%uz) failed",
-                      p, size);
+    if (new == NULL) {
+        ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
+                      "realloc(%p:%uz) failed", p, size);
     }
 
     ngx_log_debug2(NGX_LOG_DEBUG_ALLOC, log, 0, "realloc: %p:%uz", new, size);
@@ -73,20 +70,19 @@ ngx_realloc(void *p, size_t size, ngx_log_t *log)
 void *
 ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 {
-    void *p;
-    int   err;
+    void  *p;
+    int    err;
 
     err = posix_memalign(&p, alignment, size);
 
-    if (err)
-    {
+    if (err) {
         ngx_log_error(NGX_LOG_EMERG, log, err,
                       "posix_memalign(%uz, %uz) failed", alignment, size);
         p = NULL;
     }
 
-    ngx_log_debug3(NGX_LOG_DEBUG_ALLOC, log, 0, "posix_memalign: %p:%uz @%uz",
-                   p, size, alignment);
+    ngx_log_debug3(NGX_LOG_DEBUG_ALLOC, log, 0,
+                   "posix_memalign: %p:%uz @%uz", p, size, alignment);
 
     return p;
 }
@@ -96,17 +92,16 @@ ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 void *
 ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 {
-    void *p;
+    void  *p;
 
     p = memalign(alignment, size);
-    if (p == NULL)
-    {
+    if (p == NULL) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
                       "memalign(%uz, %uz) failed", alignment, size);
     }
 
-    ngx_log_debug3(NGX_LOG_DEBUG_ALLOC, log, 0, "memalign: %p:%uz @%uz", p,
-                   size, alignment);
+    ngx_log_debug3(NGX_LOG_DEBUG_ALLOC, log, 0,
+                   "memalign: %p:%uz @%uz", p, size, alignment);
 
     return p;
 }

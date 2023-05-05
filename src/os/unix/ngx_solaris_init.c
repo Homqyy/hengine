@@ -14,18 +14,19 @@ char ngx_solaris_release[10];
 char ngx_solaris_version[50];
 
 
-static ngx_os_io_t ngx_solaris_io = {ngx_unix_recv,
-                                     ngx_readv_chain,
-                                     ngx_udp_unix_recv,
-                                     ngx_unix_send,
-                                     ngx_udp_unix_send,
-                                     ngx_udp_unix_sendmsg_chain,
+static ngx_os_io_t ngx_solaris_io = {
+    ngx_unix_recv,
+    ngx_readv_chain,
+    ngx_udp_unix_recv,
+    ngx_unix_send,
+    ngx_udp_unix_send,
+    ngx_udp_unix_sendmsg_chain,
 #if (NGX_HAVE_SENDFILE)
-                                     ngx_solaris_sendfilev_chain,
-                                     NGX_IO_SENDFILE
+    ngx_solaris_sendfilev_chain,
+    NGX_IO_SENDFILE
 #else
-                                      ngx_writev_chain,
-                                      0
+    ngx_writev_chain,
+    0
 #endif
 };
 
@@ -67,8 +68,10 @@ ngx_os_specific_init(ngx_log_t *log)
 void
 ngx_os_specific_status(ngx_log_t *log)
 {
-    ngx_log_error(NGX_LOG_NOTICE, log, 0, "OS: %s %s", ngx_solaris_sysname,
-                  ngx_solaris_release);
 
-    ngx_log_error(NGX_LOG_NOTICE, log, 0, "version: %s", ngx_solaris_version);
+    ngx_log_error(NGX_LOG_NOTICE, log, 0, "OS: %s %s",
+                  ngx_solaris_sysname, ngx_solaris_release);
+
+    ngx_log_error(NGX_LOG_NOTICE, log, 0, "version: %s",
+                  ngx_solaris_version);
 }
