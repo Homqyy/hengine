@@ -10,58 +10,66 @@
 #include <ngx_event.h>
 
 
-extern ngx_event_module_t ngx_kqueue_module_ctx;
+extern ngx_event_module_t  ngx_kqueue_module_ctx;
 
 
 static ngx_int_t ngx_aio_init(ngx_cycle_t *cycle, ngx_msec_t timer);
-static void      ngx_aio_done(ngx_cycle_t *cycle);
+static void ngx_aio_done(ngx_cycle_t *cycle);
 static ngx_int_t ngx_aio_add_event(ngx_event_t *ev, ngx_int_t event,
-                                   ngx_uint_t flags);
+    ngx_uint_t flags);
 static ngx_int_t ngx_aio_del_event(ngx_event_t *ev, ngx_int_t event,
-                                   ngx_uint_t flags);
+    ngx_uint_t flags);
 static ngx_int_t ngx_aio_del_connection(ngx_connection_t *c, ngx_uint_t flags);
 static ngx_int_t ngx_aio_process_events(ngx_cycle_t *cycle, ngx_msec_t timer,
-                                        ngx_uint_t flags);
+    ngx_uint_t flags);
 
 
-ngx_os_io_t ngx_os_aio = {ngx_aio_read,  ngx_aio_read_chain,  NULL,
-                          ngx_aio_write, ngx_aio_write_chain, 0};
+ngx_os_io_t ngx_os_aio = {
+    ngx_aio_read,
+    ngx_aio_read_chain,
+    NULL,
+    ngx_aio_write,
+    ngx_aio_write_chain,
+    0
+};
 
 
-static ngx_str_t aio_name = ngx_string("aio");
+static ngx_str_t      aio_name = ngx_string("aio");
 
-ngx_event_module_t ngx_aio_module_ctx = {
+ngx_event_module_t  ngx_aio_module_ctx = {
     &aio_name,
-    NULL, /* create configuration */
-    NULL, /* init configuration */
+    NULL,                                  /* create configuration */
+    NULL,                                  /* init configuration */
 
     {
-        ngx_aio_add_event,      /* add an event */
-        ngx_aio_del_event,      /* delete an event */
-        NULL,                   /* enable an event */
-        NULL,                   /* disable an event */
-        NULL,                   /* add an connection */
-        ngx_aio_del_connection, /* delete an connection */
-        NULL,                   /* trigger a notify */
-        ngx_aio_process_events, /* process the events */
-        ngx_aio_init,           /* init the events */
-        ngx_aio_done            /* done the events */
+        ngx_aio_add_event,                 /* add an event */
+        ngx_aio_del_event,                 /* delete an event */
+        NULL,                              /* enable an event */
+        NULL,                              /* disable an event */
+        NULL,                              /* add an connection */
+        ngx_aio_del_connection,            /* delete an connection */
+        NULL,                              /* trigger a notify */
+        ngx_aio_process_events,            /* process the events */
+        ngx_aio_init,                      /* init the events */
+        ngx_aio_done                       /* done the events */
     }
 
 };
 
-ngx_module_t ngx_aio_module = {NGX_MODULE_V1,
-                               &ngx_aio_module_ctx, /* module context */
-                               NULL,                /* module directives */
-                               NGX_EVENT_MODULE,    /* module type */
-                               NULL,                /* init master */
-                               NULL,                /* init module */
-                               NULL,                /* init process */
-                               NULL,                /* init thread */
-                               NULL,                /* exit thread */
-                               NULL,                /* exit process */
-                               NULL,                /* exit master */
-                               NGX_MODULE_V1_PADDING};
+ngx_module_t  ngx_aio_module = {
+    NGX_MODULE_V1,
+    &ngx_aio_module_ctx,                   /* module context */
+    NULL,                                  /* module directives */
+    NGX_EVENT_MODULE,                      /* module type */
+    NULL,                                  /* init master */
+    NULL,                                  /* init module */
+    NULL,                                  /* init process */
+    NULL,                                  /* init thread */
+    NULL,                                  /* exit thread */
+    NULL,                                  /* exit process */
+    NULL,                                  /* exit master */
+    NGX_MODULE_V1_PADDING
+};
 
 
 #if (NGX_HAVE_KQUEUE)
@@ -69,14 +77,13 @@ ngx_module_t ngx_aio_module = {NGX_MODULE_V1,
 static ngx_int_t
 ngx_aio_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 {
-    if (ngx_kqueue_module_ctx.actions.init(cycle, timer) == NGX_ERROR)
-    {
+    if (ngx_kqueue_module_ctx.actions.init(cycle, timer) == NGX_ERROR) {
         return NGX_ERROR;
     }
 
     ngx_io = ngx_os_aio;
 
-    ngx_event_flags   = NGX_USE_AIO_EVENT;
+    ngx_event_flags = NGX_USE_AIO_EVENT;
     ngx_event_actions = ngx_aio_module_ctx.actions;
 
 
@@ -110,15 +117,13 @@ ngx_aio_del_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 static ngx_int_t
 ngx_aio_del_connection(ngx_connection_t *c, ngx_uint_t flags)
 {
-    int rc;
+    int  rc;
 
-    if (c->read->active == 0 && c->write->active == 0)
-    {
+    if (c->read->active == 0 && c->write->active == 0) {
         return NGX_OK;
     }
 
-    if (flags & NGX_CLOSE_EVENT)
-    {
+    if (flags & NGX_CLOSE_EVENT) {
         return NGX_OK;
     }
 
@@ -126,30 +131,27 @@ ngx_aio_del_connection(ngx_connection_t *c, ngx_uint_t flags)
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "aio_cancel: %d", rc);
 
-    if (rc == AIO_CANCELED)
-    {
-        c->read->active  = 0;
+    if (rc == AIO_CANCELED) {
+        c->read->active = 0;
         c->write->active = 0;
         return NGX_OK;
     }
 
-    if (rc == AIO_ALLDONE)
-    {
-        c->read->active  = 0;
+    if (rc == AIO_ALLDONE) {
+        c->read->active = 0;
         c->write->active = 0;
         ngx_log_error(NGX_LOG_ALERT, c->log, 0,
                       "aio_cancel() returned AIO_ALLDONE");
         return NGX_OK;
     }
 
-    if (rc == -1)
-    {
-        ngx_log_error(NGX_LOG_ALERT, c->log, ngx_errno, "aio_cancel() failed");
+    if (rc == -1) {
+        ngx_log_error(NGX_LOG_ALERT, c->log, ngx_errno,
+                      "aio_cancel() failed");
         return NGX_ERROR;
     }
 
-    if (rc == AIO_NOTCANCELED)
-    {
+    if (rc == AIO_NOTCANCELED) {
         ngx_log_error(NGX_LOG_ALERT, c->log, 0,
                       "aio_cancel() returned AIO_NOTCANCELED");
 

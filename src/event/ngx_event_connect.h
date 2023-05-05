@@ -14,73 +14,72 @@
 #include <ngx_event.h>
 
 
-#define NGX_PEER_KEEPALIVE 1
-#define NGX_PEER_NEXT      2
-#define NGX_PEER_FAILED    4
+#define NGX_PEER_KEEPALIVE           1
+#define NGX_PEER_NEXT                2
+#define NGX_PEER_FAILED              4
 
 
-typedef struct ngx_peer_connection_s ngx_peer_connection_t;
+typedef struct ngx_peer_connection_s  ngx_peer_connection_t;
 
 typedef ngx_int_t (*ngx_event_get_peer_pt)(ngx_peer_connection_t *pc,
-                                           void                  *data);
+    void *data);
 typedef void (*ngx_event_free_peer_pt)(ngx_peer_connection_t *pc, void *data,
-                                       ngx_uint_t state);
-typedef void (*ngx_event_notify_peer_pt)(ngx_peer_connection_t *pc, void *data,
-                                         ngx_uint_t type);
+    ngx_uint_t state);
+typedef void (*ngx_event_notify_peer_pt)(ngx_peer_connection_t *pc,
+    void *data, ngx_uint_t type);
 typedef ngx_int_t (*ngx_event_set_peer_session_pt)(ngx_peer_connection_t *pc,
-                                                   void                  *data);
+    void *data);
 typedef void (*ngx_event_save_peer_session_pt)(ngx_peer_connection_t *pc,
-                                               void                  *data);
+    void *data);
 
 
-struct ngx_peer_connection_s
-{
-    ngx_connection_t *connection;
+struct ngx_peer_connection_s {
+    ngx_connection_t                *connection;
 
-    struct sockaddr *sockaddr;
-    socklen_t        socklen;
-    ngx_str_t       *name;
-#if (T_NGX_HTTP_DYNAMIC_RESOLVE)
-    ngx_str_t *host;
+    struct sockaddr                 *sockaddr;
+    socklen_t                        socklen;
+    ngx_str_t                       *name;
+#if (T_NGX_HTTP_DYNAMIC_RESOLVE)    
+    ngx_str_t                       *host;
 #endif
 
-    ngx_uint_t tries;
-    ngx_msec_t start_time;
+    ngx_uint_t                       tries;
+    ngx_msec_t                       start_time;
 
-    ngx_event_get_peer_pt    get;
-    ngx_event_free_peer_pt   free;
-    ngx_event_notify_peer_pt notify;
-    void                    *data;
+    ngx_event_get_peer_pt            get;
+    ngx_event_free_peer_pt           free;
+    ngx_event_notify_peer_pt         notify;
+    void                            *data;
 
 #if (NGX_SSL || NGX_COMPAT)
-    ngx_event_set_peer_session_pt  set_session;
-    ngx_event_save_peer_session_pt save_session;
+    ngx_event_set_peer_session_pt    set_session;
+    ngx_event_save_peer_session_pt   save_session;
 #endif
 
-    ngx_addr_t *local;
+    ngx_addr_t                      *local;
 
-    int type;
-    int rcvbuf;
+    int                              type;
+    int                              rcvbuf;
 
-    ngx_log_t *log;
+    ngx_log_t                       *log;
 
-    unsigned cached       : 1;
-    unsigned transparent  : 1;
-    unsigned so_keepalive : 1;
-    unsigned down         : 1;
+    unsigned                         cached:1;
+    unsigned                         transparent:1;
+    unsigned                         so_keepalive:1;
+    unsigned                         down:1;
 
 #if (NGX_KCP)
-    ngx_uint_t conv;
-    ngx_uint_t kcp_mode;
-    unsigned   kcp : 1;
+    ngx_uint_t                       conv;
+    ngx_uint_t                       kcp_mode;
+    unsigned                         kcp : 1;
 #endif
 
-#if (T_NGX_HTTP_DYNAMIC_RESOLVE)
-    unsigned resolved : 2;
+#if (T_NGX_HTTP_DYNAMIC_RESOLVE)    
+    unsigned                         resolved:2;
 #endif
 
-    /* ngx_connection_log_error_e */
-    unsigned log_error : 2;
+                                     /* ngx_connection_log_error_e */
+    unsigned                         log_error:2;
 
     NGX_COMPAT_BEGIN(2)
     NGX_COMPAT_END
