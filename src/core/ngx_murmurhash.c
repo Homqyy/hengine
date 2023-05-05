@@ -11,13 +11,12 @@
 uint32_t
 ngx_murmur_hash2(u_char *data, size_t len)
 {
-    uint32_t h, k;
+    uint32_t  h, k;
 
     h = 0 ^ len;
 
-    while (len >= 4)
-    {
-        k = data[0];
+    while (len >= 4) {
+        k  = data[0];
         k |= data[1] << 8;
         k |= data[2] << 16;
         k |= data[3] << 24;
@@ -33,15 +32,16 @@ ngx_murmur_hash2(u_char *data, size_t len)
         len -= 4;
     }
 
-    switch (len)
-    {
+    switch (len) {
     case 3:
         h ^= data[2] << 16;
         /* fall through */
     case 2:
         h ^= data[1] << 8;
         /* fall through */
-    case 1: h ^= data[0]; h *= 0x5bd1e995;
+    case 1:
+        h ^= data[0];
+        h *= 0x5bd1e995;
     }
 
     h ^= h >> 13;
