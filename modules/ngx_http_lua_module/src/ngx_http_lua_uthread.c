@@ -49,22 +49,20 @@ ngx_http_lua_inject_uthread_api(ngx_log_t *log, lua_State *L)
 static int
 ngx_http_lua_uthread_spawn(lua_State *L)
 {
-    int                    n;
-    ngx_http_request_t    *r;
-    ngx_http_lua_ctx_t    *ctx;
-    ngx_http_lua_co_ctx_t *coctx = NULL;
+    int                           n;
+    ngx_http_request_t           *r;
+    ngx_http_lua_ctx_t           *ctx;
+    ngx_http_lua_co_ctx_t        *coctx = NULL;
 
     n = lua_gettop(L);
 
     r = ngx_http_lua_get_req(L);
-    if (r == NULL)
-    {
+    if (r == NULL) {
         return luaL_error(L, "no request found");
     }
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         return luaL_error(L, "no request ctx found");
     }
 
@@ -72,14 +70,14 @@ ngx_http_lua_uthread_spawn(lua_State *L)
 
     /* anchor the newly created coroutine into the Lua registry */
 
-    lua_pushlightuserdata(L, ngx_http_lua_lightudata_mask(coroutines_key));
+    lua_pushlightuserdata(L, ngx_http_lua_lightudata_mask(
+                          coroutines_key));
     lua_rawget(L, LUA_REGISTRYINDEX);
     lua_pushvalue(L, -2);
     coctx->co_ref = luaL_ref(L, -2);
     lua_pop(L, 1);
 
-    if (n > 1)
-    {
+    if (n > 1) {
         lua_replace(L, 1);
         lua_xmove(L, coctx->co, n - 1);
     }
@@ -88,22 +86,21 @@ ngx_http_lua_uthread_spawn(lua_State *L)
     ctx->uthreads++;
 
     coctx->co_status = NGX_HTTP_LUA_CO_RUNNING;
-    ctx->co_op       = NGX_HTTP_LUA_USER_THREAD_RESUME;
+    ctx->co_op = NGX_HTTP_LUA_USER_THREAD_RESUME;
 
     ctx->cur_co_ctx->thread_spawn_yielded = 1;
 
-    if (ngx_http_lua_post_thread(r, ctx, ctx->cur_co_ctx) != NGX_OK)
-    {
+    if (ngx_http_lua_post_thread(r, ctx, ctx->cur_co_ctx) != NGX_OK) {
         return luaL_error(L, "no memory");
     }
 
     coctx->parent_co_ctx = ctx->cur_co_ctx;
-    ctx->cur_co_ctx      = coctx;
+    ctx->cur_co_ctx = coctx;
 
     ngx_http_lua_probe_user_thread_spawn(r, L, coctx->co);
 
     dd("yielding with arg %s, top=%d, index-1:%s", luaL_typename(L, -1),
-       (int)lua_gettop(L), luaL_typename(L, 1));
+       (int) lua_gettop(L), luaL_typename(L, 1));
     return lua_yield(L, 1);
 }
 
@@ -111,72 +108,64 @@ ngx_http_lua_uthread_spawn(lua_State *L)
 static int
 ngx_http_lua_uthread_wait(lua_State *L)
 {
-    int                    i, nargs, nrets;
-    lua_State             *sub_co;
-    ngx_http_request_t    *r;
-    ngx_http_lua_ctx_t    *ctx;
-    ngx_http_lua_co_ctx_t *coctx, *sub_coctx;
+    int                          i, nargs, nrets;
+    lua_State                   *sub_co;
+    ngx_http_request_t          *r;
+    ngx_http_lua_ctx_t          *ctx;
+    ngx_http_lua_co_ctx_t       *coctx, *sub_coctx;
 
     r = ngx_http_lua_get_req(L);
-    if (r == NULL)
-    {
+    if (r == NULL) {
         return luaL_error(L, "no request found");
     }
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         return luaL_error(L, "no request ctx found");
     }
 
-    ngx_http_lua_check_context(
-        L, ctx,
-        NGX_HTTP_LUA_CONTEXT_REWRITE | NGX_HTTP_LUA_CONTEXT_ACCESS
-            | NGX_HTTP_LUA_CONTEXT_CONTENT | NGX_HTTP_LUA_CONTEXT_TIMER
-            | NGX_HTTP_LUA_CONTEXT_SSL_CERT);
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
+                               | NGX_HTTP_LUA_CONTEXT_ACCESS
+                               | NGX_HTTP_LUA_CONTEXT_CONTENT
+                               | NGX_HTTP_LUA_CONTEXT_TIMER
+                               | NGX_HTTP_LUA_CONTEXT_SSL_CERT);
 
     coctx = ctx->cur_co_ctx;
 
     nargs = lua_gettop(L);
 
-    for (i = 1; i <= nargs; i++)
-    {
+    for (i = 1; i <= nargs; i++) {
         sub_co = lua_tothread(L, i);
 
         luaL_argcheck(L, sub_co, i, "lua thread expected");
 
         sub_coctx = ngx_http_lua_get_co_ctx(sub_co, ctx);
-        if (sub_coctx == NULL)
-        {
+        if (sub_coctx == NULL) {
             return luaL_error(L, "no co ctx found");
         }
 
-        if (!sub_coctx->is_uthread)
-        {
+        if (!sub_coctx->is_uthread) {
             return luaL_error(L, "attempt to wait on a coroutine that is "
-                                 "not a user thread");
+                              "not a user thread");
         }
 
-        if (sub_coctx->parent_co_ctx != coctx)
-        {
+        if (sub_coctx->parent_co_ctx != coctx) {
             return luaL_error(L, "only the parent coroutine can wait on the "
-                                 "thread");
+                              "thread");
         }
 
-        switch (sub_coctx->co_status)
-        {
+        switch (sub_coctx->co_status) {
         case NGX_HTTP_LUA_CO_ZOMBIE:
 
             ngx_http_lua_probe_info("found zombie child");
 
             nrets = lua_gettop(sub_coctx->co);
 
-            dd("child retval count: %d, %s: %s", (int)nrets,
+            dd("child retval count: %d, %s: %s", (int) nrets,
                luaL_typename(sub_coctx->co, -1),
                lua_tostring(sub_coctx->co, -1));
 
-            if (nrets)
-            {
+            if (nrets) {
                 lua_xmove(sub_coctx->co, L, nrets);
             }
 
@@ -188,10 +177,10 @@ ngx_http_lua_uthread_wait(lua_State *L)
             return nrets;
 
         case NGX_HTTP_LUA_CO_DEAD:
-            dd("uthread already waited: %p (parent %p)", sub_coctx, coctx);
+            dd("uthread already waited: %p (parent %p)", sub_coctx,
+               coctx);
 
-            if (i < nargs)
-            {
+            if (i < nargs) {
                 /* just ignore it if it is not the last one */
                 continue;
             }
@@ -218,28 +207,26 @@ ngx_http_lua_uthread_wait(lua_State *L)
 static int
 ngx_http_lua_uthread_kill(lua_State *L)
 {
-    lua_State             *sub_co;
-    ngx_http_request_t    *r;
-    ngx_http_lua_ctx_t    *ctx;
-    ngx_http_lua_co_ctx_t *coctx, *sub_coctx;
+    lua_State                   *sub_co;
+    ngx_http_request_t          *r;
+    ngx_http_lua_ctx_t          *ctx;
+    ngx_http_lua_co_ctx_t       *coctx, *sub_coctx;
 
     r = ngx_http_lua_get_req(L);
-    if (r == NULL)
-    {
+    if (r == NULL) {
         return luaL_error(L, "no request found");
     }
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         return luaL_error(L, "no request ctx found");
     }
 
-    ngx_http_lua_check_context(
-        L, ctx,
-        NGX_HTTP_LUA_CONTEXT_REWRITE | NGX_HTTP_LUA_CONTEXT_ACCESS
-            | NGX_HTTP_LUA_CONTEXT_CONTENT | NGX_HTTP_LUA_CONTEXT_TIMER
-            | NGX_HTTP_LUA_CONTEXT_SSL_CERT);
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
+                               | NGX_HTTP_LUA_CONTEXT_ACCESS
+                               | NGX_HTTP_LUA_CONTEXT_CONTENT
+                               | NGX_HTTP_LUA_CONTEXT_TIMER
+                               | NGX_HTTP_LUA_CONTEXT_SSL_CERT);
 
     coctx = ctx->cur_co_ctx;
 
@@ -248,34 +235,29 @@ ngx_http_lua_uthread_kill(lua_State *L)
 
     sub_coctx = ngx_http_lua_get_co_ctx(sub_co, ctx);
 
-    if (sub_coctx == NULL)
-    {
+    if (sub_coctx == NULL) {
         return luaL_error(L, "no co ctx found");
     }
 
-    if (!sub_coctx->is_uthread)
-    {
+    if (!sub_coctx->is_uthread) {
         lua_pushnil(L);
         lua_pushliteral(L, "not user thread");
         return 2;
     }
 
-    if (sub_coctx->parent_co_ctx != coctx)
-    {
+    if (sub_coctx->parent_co_ctx != coctx) {
         lua_pushnil(L);
         lua_pushliteral(L, "killer not parent");
         return 2;
     }
 
-    if (sub_coctx->pending_subreqs > 0)
-    {
+    if (sub_coctx->pending_subreqs > 0) {
         lua_pushnil(L);
         lua_pushliteral(L, "pending subrequests");
         return 2;
     }
 
-    switch (sub_coctx->co_status)
-    {
+    switch (sub_coctx->co_status) {
     case NGX_HTTP_LUA_CO_ZOMBIE:
         ngx_http_lua_del_thread(r, L, ctx, sub_coctx);
         ctx->uthreads--;

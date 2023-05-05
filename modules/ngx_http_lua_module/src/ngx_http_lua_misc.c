@@ -45,11 +45,10 @@ ngx_http_lua_inject_req_misc_api(lua_State *L)
 static int
 ngx_http_lua_ngx_req_is_internal(lua_State *L)
 {
-    ngx_http_request_t *r;
+    ngx_http_request_t  *r;
 
     r = ngx_http_lua_get_req(L);
-    if (r == NULL)
-    {
+    if (r == NULL) {
         return luaL_error(L, "no request object found");
     }
 
@@ -61,27 +60,25 @@ ngx_http_lua_ngx_req_is_internal(lua_State *L)
 static int
 ngx_http_lua_ngx_get(lua_State *L)
 {
-    int                 status;
-    ngx_http_request_t *r;
-    u_char             *p;
-    size_t              len;
-    ngx_http_lua_ctx_t *ctx;
+    int                          status;
+    ngx_http_request_t          *r;
+    u_char                      *p;
+    size_t                       len;
+    ngx_http_lua_ctx_t          *ctx;
 
     r = ngx_http_lua_get_req(L);
-    if (r == NULL)
-    {
+    if (r == NULL) {
         lua_pushnil(L);
         return 1;
     }
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         lua_pushnil(L);
         return 1;
     }
 
-    p = (u_char *)luaL_checklstring(L, -1, &len);
+    p = (u_char *) luaL_checklstring(L, -1, &len);
 
     dd("ngx get %s", p);
 
@@ -90,20 +87,16 @@ ngx_http_lua_ngx_get(lua_State *L)
     {
         ngx_http_lua_check_fake_request(L, r);
 
-        if (r->err_status)
-        {
+        if (r->err_status) {
             status = r->err_status;
-        }
-        else if (r->headers_out.status)
-        {
+
+        } else if (r->headers_out.status) {
             status = r->headers_out.status;
-        }
-        else if (r->http_version == NGX_HTTP_VERSION_9)
-        {
+
+        } else if (r->http_version == NGX_HTTP_VERSION_9) {
             status = 9;
-        }
-        else
-        {
+
+        } else {
             status = 0;
         }
 
@@ -145,51 +138,46 @@ ngx_http_lua_ngx_get(lua_State *L)
 static int
 ngx_http_lua_ngx_set(lua_State *L)
 {
-    ngx_http_request_t *r;
-    u_char             *p;
-    size_t              len;
+    ngx_http_request_t          *r;
+    u_char                      *p;
+    size_t                       len;
 
     /* we skip the first argument that is the table */
-    p = (u_char *)luaL_checklstring(L, 2, &len);
+    p = (u_char *) luaL_checklstring(L, 2, &len);
 
     if (len == sizeof("status") - 1
         && ngx_strncmp(p, "status", sizeof("status") - 1) == 0)
     {
         r = ngx_http_lua_get_req(L);
-        if (r == NULL)
-        {
+        if (r == NULL) {
             return luaL_error(L, "no request object found");
         }
 
-        if (r->header_sent)
-        {
+        if (r->header_sent) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "attempt to set ngx.status after sending out "
                           "response headers");
             return 0;
         }
 
-        if (r->err_status)
-        {
+        if (r->err_status) {
             r->err_status = 0;
         }
 
         ngx_http_lua_check_fake_request(L, r);
 
         /* get the value */
-        r->headers_out.status = (ngx_uint_t)luaL_checknumber(L, 3);
+        r->headers_out.status = (ngx_uint_t) luaL_checknumber(L, 3);
 
-        if (r->headers_out.status == 101)
-        {
+        if (r->headers_out.status == 101) {
             /*
              * XXX work-around a bug in the Nginx core that 101 does
              * not have a default status line
              */
 
             ngx_str_set(&r->headers_out.status_line, "101 Switching Protocols");
-        }
-        else
-        {
+
+        } else {
             r->headers_out.status_line.len = 0;
         }
 
@@ -200,8 +188,7 @@ ngx_http_lua_ngx_set(lua_State *L)
         && ngx_strncmp(p, "ctx", sizeof("ctx") - 1) == 0)
     {
         r = ngx_http_lua_get_req(L);
-        if (r == NULL)
-        {
+        if (r == NULL) {
             return luaL_error(L, "no request object found");
         }
 
@@ -217,25 +204,20 @@ ngx_http_lua_ngx_set(lua_State *L)
 int
 ngx_http_lua_ffi_get_resp_status(ngx_http_request_t *r)
 {
-    if (r->connection->fd == (ngx_socket_t)-1)
-    {
+    if (r->connection->fd == (ngx_socket_t) -1) {
         return NGX_HTTP_LUA_FFI_BAD_CONTEXT;
     }
 
-    if (r->err_status)
-    {
+    if (r->err_status) {
         return r->err_status;
-    }
-    else if (r->headers_out.status)
-    {
+
+    } else if (r->headers_out.status) {
         return r->headers_out.status;
-    }
-    else if (r->http_version == NGX_HTTP_VERSION_9)
-    {
+
+    } else if (r->http_version == NGX_HTTP_VERSION_9) {
         return 9;
-    }
-    else
-    {
+
+    } else {
         return 0;
     }
 }
@@ -244,13 +226,11 @@ ngx_http_lua_ffi_get_resp_status(ngx_http_request_t *r)
 int
 ngx_http_lua_ffi_set_resp_status(ngx_http_request_t *r, int status)
 {
-    if (r->connection->fd == (ngx_socket_t)-1)
-    {
+    if (r->connection->fd == (ngx_socket_t) -1) {
         return NGX_HTTP_LUA_FFI_BAD_CONTEXT;
     }
 
-    if (r->header_sent)
-    {
+    if (r->header_sent) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "attempt to set ngx.status after sending out "
                       "response headers");
@@ -259,22 +239,19 @@ ngx_http_lua_ffi_set_resp_status(ngx_http_request_t *r, int status)
 
     r->headers_out.status = status;
 
-    if (r->err_status)
-    {
+    if (r->err_status) {
         r->err_status = 0;
     }
 
-    if (status == 101)
-    {
+    if (status == 101) {
         /*
          * XXX work-around a bug in the Nginx core older than 1.5.5
          * that 101 does not have a default status line
          */
 
         ngx_str_set(&r->headers_out.status_line, "101 Switching Protocols");
-    }
-    else
-    {
+
+    } else {
         r->headers_out.status_line.len = 0;
     }
 
@@ -285,8 +262,7 @@ ngx_http_lua_ffi_set_resp_status(ngx_http_request_t *r, int status)
 int
 ngx_http_lua_ffi_is_subrequest(ngx_http_request_t *r)
 {
-    if (r->connection->fd == (ngx_socket_t)-1)
-    {
+    if (r->connection->fd == (ngx_socket_t) -1) {
         return NGX_HTTP_LUA_FFI_BAD_CONTEXT;
     }
 
@@ -297,16 +273,14 @@ ngx_http_lua_ffi_is_subrequest(ngx_http_request_t *r)
 int
 ngx_http_lua_ffi_headers_sent(ngx_http_request_t *r)
 {
-    ngx_http_lua_ctx_t *ctx;
+    ngx_http_lua_ctx_t          *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         return NGX_HTTP_LUA_FFI_NO_REQ_CTX;
     }
 
-    if (r->connection->fd == (ngx_socket_t)-1)
-    {
+    if (r->connection->fd == (ngx_socket_t) -1) {
         return NGX_HTTP_LUA_FFI_BAD_CONTEXT;
     }
 
@@ -317,20 +291,20 @@ ngx_http_lua_ffi_headers_sent(ngx_http_request_t *r)
 int
 ngx_http_lua_ffi_get_conf_env(u_char *name, u_char **env_buf, size_t *name_len)
 {
-    ngx_uint_t       i;
-    ngx_str_t       *var;
-    ngx_core_conf_t *ccf;
+    ngx_uint_t            i;
+    ngx_str_t            *var;
+    ngx_core_conf_t      *ccf;
 
-    ccf = (ngx_core_conf_t *)ngx_get_conf(ngx_cycle->conf_ctx, ngx_core_module);
+    ccf = (ngx_core_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
+                                           ngx_core_module);
 
     var = ccf->env.elts;
 
-    for (i = 0; i < ccf->env.nelts; i++)
-    {
+    for (i = 0; i < ccf->env.nelts; i++) {
         if (var[i].data[var[i].len] == '='
             && ngx_strncmp(name, var[i].data, var[i].len) == 0)
         {
-            *env_buf  = var[i].data;
+            *env_buf = var[i].data;
             *name_len = var[i].len;
 
             return NGX_OK;

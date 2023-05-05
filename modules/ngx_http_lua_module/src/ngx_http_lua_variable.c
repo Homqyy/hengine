@@ -23,7 +23,7 @@ void
 ngx_http_lua_inject_variable_api(lua_State *L)
 {
     /* {{{ register reference maps */
-    lua_newtable(L); /* ngx.var */
+    lua_newtable(L);    /* ngx.var */
 
     lua_createtable(L, 0, 2 /* nrec */); /* metatable for .var */
     lua_pushcfunction(L, ngx_http_lua_var_get);
@@ -46,46 +46,44 @@ ngx_http_lua_inject_variable_api(lua_State *L)
 static int
 ngx_http_lua_var_get(lua_State *L)
 {
-    ngx_http_request_t        *r;
-    u_char                    *p, *lowcase;
-    size_t                     len;
-    ngx_uint_t                 hash;
-    ngx_str_t                  name;
-    ngx_http_variable_value_t *vv;
+    ngx_http_request_t          *r;
+    u_char                      *p, *lowcase;
+    size_t                       len;
+    ngx_uint_t                   hash;
+    ngx_str_t                    name;
+    ngx_http_variable_value_t   *vv;
 
 #if (NGX_PCRE)
-    u_char    *val;
-    ngx_uint_t n;
-    LUA_NUMBER index;
-    int       *cap;
+    u_char                      *val;
+    ngx_uint_t                   n;
+    LUA_NUMBER                   index;
+    int                         *cap;
 #endif
 
     r = ngx_http_lua_get_req(L);
-    if (r == NULL)
-    {
+    if (r == NULL) {
         return luaL_error(L, "no request object found");
     }
 
     ngx_http_lua_check_fake_request(L, r);
 
 #if (NGX_PCRE)
-    if (lua_type(L, -1) == LUA_TNUMBER)
-    {
+    if (lua_type(L, -1) == LUA_TNUMBER) {
         /* it is a regex capturing variable */
 
         index = lua_tonumber(L, -1);
 
-        if (index <= 0)
-        {
+        if (index <= 0) {
             lua_pushnil(L);
             return 1;
         }
 
-        n = (ngx_uint_t)index * 2;
+        n = (ngx_uint_t) index * 2;
 
-        dd("n = %d, ncaptures = %d", (int)n, (int)r->ncaptures);
+        dd("n = %d, ncaptures = %d", (int) n, (int) r->ncaptures);
 
-        if (r->captures == NULL || r->captures_data == NULL
+        if (r->captures == NULL
+            || r->captures_data == NULL
             || n >= r->ncaptures)
         {
             lua_pushnil(L);
@@ -100,35 +98,33 @@ ngx_http_lua_var_get(lua_State *L)
 
         val = &p[cap[n]];
 
-        lua_pushlstring(L, (const char *)val, (size_t)(cap[n + 1] - cap[n]));
+        lua_pushlstring(L, (const char *) val, (size_t) (cap[n + 1] - cap[n]));
 
         return 1;
     }
 #endif
 
-    if (lua_type(L, -1) != LUA_TSTRING)
-    {
+    if (lua_type(L, -1) != LUA_TSTRING) {
         return luaL_error(L, "bad variable name");
     }
 
-    p = (u_char *)lua_tolstring(L, -1, &len);
+    p = (u_char *) lua_tolstring(L, -1, &len);
 
     lowcase = lua_newuserdata(L, len);
 
     hash = ngx_hash_strlow(lowcase, p, len);
 
-    name.len  = len;
+    name.len = len;
     name.data = lowcase;
 
     vv = ngx_http_get_variable(r, &name, hash);
 
-    if (vv == NULL || vv->not_found)
-    {
+    if (vv == NULL || vv->not_found) {
         lua_pushnil(L);
         return 1;
     }
 
-    lua_pushlstring(L, (const char *)vv->data, (size_t)vv->len);
+    lua_pushlstring(L, (const char *) vv->data, (size_t) vv->len);
     return 1;
 }
 
@@ -143,20 +139,19 @@ ngx_http_lua_var_get(lua_State *L)
 static int
 ngx_http_lua_var_set(lua_State *L)
 {
-    ngx_http_variable_t       *v;
-    ngx_http_variable_value_t *vv;
-    ngx_http_core_main_conf_t *cmcf;
-    u_char                    *p, *lowcase, *val;
-    size_t                     len;
-    ngx_str_t                  name;
-    ngx_uint_t                 hash;
-    ngx_http_request_t        *r;
-    int                        value_type;
-    const char                *msg;
+    ngx_http_variable_t         *v;
+    ngx_http_variable_value_t   *vv;
+    ngx_http_core_main_conf_t   *cmcf;
+    u_char                      *p, *lowcase, *val;
+    size_t                       len;
+    ngx_str_t                    name;
+    ngx_uint_t                   hash;
+    ngx_http_request_t          *r;
+    int                          value_type;
+    const char                  *msg;
 
     r = ngx_http_lua_get_req(L);
-    if (r == NULL)
-    {
+    if (r == NULL) {
         return luaL_error(L, "no request object found");
     }
 
@@ -166,33 +161,30 @@ ngx_http_lua_var_set(lua_State *L)
 
     /* we read the variable name */
 
-    if (lua_type(L, 2) != LUA_TSTRING)
-    {
+    if (lua_type(L, 2) != LUA_TSTRING) {
         return luaL_error(L, "bad variable name");
     }
 
-    p = (u_char *)lua_tolstring(L, 2, &len);
+    p = (u_char *) lua_tolstring(L, 2, &len);
 
     lowcase = lua_newuserdata(L, len + 1);
 
-    hash         = ngx_hash_strlow(lowcase, p, len);
+    hash = ngx_hash_strlow(lowcase, p, len);
     lowcase[len] = '\0';
 
-    name.len  = len;
+    name.len = len;
     name.data = lowcase;
 
     /* we read the variable new value */
 
     value_type = lua_type(L, 3);
-    switch (value_type)
-    {
+    switch (value_type) {
     case LUA_TNUMBER:
     case LUA_TSTRING:
-        p = (u_char *)luaL_checklstring(L, 3, &len);
+        p = (u_char *) luaL_checklstring(L, 3, &len);
 
         val = ngx_palloc(r->pool, len);
-        if (val == NULL)
-        {
+        if (val == NULL) {
             return luaL_error(L, "memory allocation error");
         }
 
@@ -209,10 +201,8 @@ ngx_http_lua_var_set(lua_State *L)
         break;
 
     default:
-        msg = lua_pushfstring(L,
-                              "string, number, or nil expected, "
-                              "but got %s",
-                              lua_typename(L, value_type));
+        msg = lua_pushfstring(L, "string, number, or nil expected, "
+                              "but got %s", lua_typename(L, value_type));
         return luaL_argerror(L, 1, msg);
     }
 
@@ -222,39 +212,34 @@ ngx_http_lua_var_set(lua_State *L)
 
     v = ngx_hash_find(&cmcf->variables_hash, hash, name.data, name.len);
 
-    if (v)
-    {
-        if (!(v->flags & NGX_HTTP_VAR_CHANGEABLE))
-        {
+    if (v) {
+        if (!(v->flags & NGX_HTTP_VAR_CHANGEABLE)) {
             return luaL_error(L, "variable \"%s\" not changeable", lowcase);
         }
 
-        if (v->set_handler)
-        {
+        if (v->set_handler) {
+
             dd("set variables with set_handler");
 
             vv = ngx_palloc(r->pool, sizeof(ngx_http_variable_value_t));
-            if (vv == NULL)
-            {
+            if (vv == NULL) {
                 return luaL_error(L, "no memory");
             }
 
-            if (value_type == LUA_TNIL)
-            {
-                vv->valid        = 0;
-                vv->not_found    = 1;
+            if (value_type == LUA_TNIL) {
+                vv->valid = 0;
+                vv->not_found = 1;
                 vv->no_cacheable = 0;
-                vv->data         = NULL;
-                vv->len          = 0;
-            }
-            else
-            {
-                vv->valid        = 1;
-                vv->not_found    = 0;
+                vv->data = NULL;
+                vv->len = 0;
+
+            } else {
+                vv->valid = 1;
+                vv->not_found = 0;
                 vv->no_cacheable = 0;
 
                 vv->data = val;
-                vv->len  = len;
+                vv->len = len;
             }
 
             v->set_handler(r, vv, v->data);
@@ -262,29 +247,26 @@ ngx_http_lua_var_set(lua_State *L)
             return 0;
         }
 
-        if (v->flags & NGX_HTTP_VAR_INDEXED)
-        {
+        if (v->flags & NGX_HTTP_VAR_INDEXED) {
             vv = &r->variables[v->index];
 
             dd("set indexed variable");
 
-            if (value_type == LUA_TNIL)
-            {
-                vv->valid        = 0;
-                vv->not_found    = 1;
+            if (value_type == LUA_TNIL) {
+                vv->valid = 0;
+                vv->not_found = 1;
                 vv->no_cacheable = 0;
 
                 vv->data = NULL;
-                vv->len  = 0;
-            }
-            else
-            {
-                vv->valid        = 1;
-                vv->not_found    = 0;
+                vv->len = 0;
+
+            } else {
+                vv->valid = 1;
+                vv->not_found = 0;
                 vv->no_cacheable = 0;
 
                 vv->data = val;
-                vv->len  = len;
+                vv->len = len;
             }
 
             return 0;
@@ -296,8 +278,7 @@ ngx_http_lua_var_set(lua_State *L)
 
     /* variable not found */
 
-    return luaL_error(L,
-                      "variable \"%s\" not found for writing; "
+    return luaL_error(L, "variable \"%s\" not found for writing; "
                       "maybe it is a built-in variable that is not changeable "
                       "or you forgot to use \"set $%s '';\" "
                       "in the config file to define it first",
@@ -308,46 +289,43 @@ ngx_http_lua_var_set(lua_State *L)
 #ifndef NGX_LUA_NO_FFI_API
 int
 ngx_http_lua_ffi_var_get(ngx_http_request_t *r, u_char *name_data,
-                         size_t name_len, u_char *lowcase_buf, int capture_id,
-                         u_char **value, size_t *value_len, char **err)
+    size_t name_len, u_char *lowcase_buf, int capture_id, u_char **value,
+    size_t *value_len, char **err)
 {
-    ngx_uint_t                 hash;
-    ngx_str_t                  name;
-    ngx_http_variable_value_t *vv;
+    ngx_uint_t                   hash;
+    ngx_str_t                    name;
+    ngx_http_variable_value_t   *vv;
 
 #if (NGX_PCRE)
-    u_char    *p;
-    ngx_uint_t n;
-    int       *cap;
+    u_char                      *p;
+    ngx_uint_t                   n;
+    int                         *cap;
 #endif
 
-    if (r == NULL)
-    {
+    if (r == NULL) {
         *err = "no request object found";
         return NGX_ERROR;
     }
 
-    if ((r)->connection->fd == (ngx_socket_t)-1)
-    {
+    if ((r)->connection->fd == (ngx_socket_t) -1) {
         *err = "API disabled in the current context";
         return NGX_ERROR;
     }
 
 #if (NGX_PCRE)
-    if (name_data == 0)
-    {
-        if (capture_id <= 0)
-        {
+    if (name_data == 0) {
+        if (capture_id <= 0) {
             return NGX_DECLINED;
         }
 
         /* it is a regex capturing variable */
 
-        n = (ngx_uint_t)capture_id * 2;
+        n = (ngx_uint_t) capture_id * 2;
 
-        dd("n = %d, ncaptures = %d", (int)n, (int)r->ncaptures);
+        dd("n = %d, ncaptures = %d", (int) n, (int) r->ncaptures);
 
-        if (r->captures == NULL || r->captures_data == NULL
+        if (r->captures == NULL
+            || r->captures_data == NULL
             || n >= r->ncaptures)
         {
             return NGX_DECLINED;
@@ -356,10 +334,10 @@ ngx_http_lua_ffi_var_get(ngx_http_request_t *r, u_char *name_data,
         /* n >= 0 && n < r->ncaptures */
 
         cap = r->captures;
-        p   = r->captures_data;
+        p = r->captures_data;
 
-        *value     = &p[cap[n]];
-        *value_len = (size_t)(cap[n + 1] - cap[n]);
+        *value = &p[cap[n]];
+        *value_len = (size_t) (cap[n + 1] - cap[n]);
 
         return NGX_OK;
     }
@@ -368,17 +346,16 @@ ngx_http_lua_ffi_var_get(ngx_http_request_t *r, u_char *name_data,
     hash = ngx_hash_strlow(lowcase_buf, name_data, name_len);
 
     name.data = lowcase_buf;
-    name.len  = name_len;
+    name.len = name_len;
 
-    dd("variable name: %.*s", (int)name_len, lowcase_buf);
+    dd("variable name: %.*s", (int) name_len, lowcase_buf);
 
     vv = ngx_http_get_variable(r, &name, hash);
-    if (vv == NULL || vv->not_found)
-    {
+    if (vv == NULL || vv->not_found) {
         return NGX_DECLINED;
     }
 
-    *value     = vv->data;
+    *value = vv->data;
     *value_len = vv->len;
     return NGX_OK;
 }
@@ -386,33 +363,31 @@ ngx_http_lua_ffi_var_get(ngx_http_request_t *r, u_char *name_data,
 
 int
 ngx_http_lua_ffi_var_set(ngx_http_request_t *r, u_char *name_data,
-                         size_t name_len, u_char *lowcase_buf, u_char *value,
-                         size_t value_len, u_char *errbuf, size_t *errlen)
+    size_t name_len, u_char *lowcase_buf, u_char *value, size_t value_len,
+    u_char *errbuf, size_t *errlen)
 {
-    u_char                    *p;
-    ngx_uint_t                 hash;
-    ngx_http_variable_t       *v;
-    ngx_http_variable_value_t *vv;
-    ngx_http_core_main_conf_t *cmcf;
+    u_char                      *p;
+    ngx_uint_t                   hash;
+    ngx_http_variable_t         *v;
+    ngx_http_variable_value_t   *vv;
+    ngx_http_core_main_conf_t   *cmcf;
 
-    if (r == NULL)
-    {
-        *errlen =
-            ngx_snprintf(errbuf, *errlen, "no request object found") - errbuf;
+    if (r == NULL) {
+        *errlen = ngx_snprintf(errbuf, *errlen, "no request object found")
+                  - errbuf;
         return NGX_ERROR;
     }
 
-    if ((r)->connection->fd == (ngx_socket_t)-1)
-    {
-        *errlen =
-            ngx_snprintf(errbuf, *errlen, "API disabled in the current context")
-            - errbuf;
+    if ((r)->connection->fd == (ngx_socket_t) -1) {
+        *errlen = ngx_snprintf(errbuf, *errlen,
+                               "API disabled in the current context")
+                  - errbuf;
         return NGX_ERROR;
     }
 
     hash = ngx_hash_strlow(lowcase_buf, name_data, name_len);
 
-    dd("variable name: %.*s", (int)name_len, lowcase_buf);
+    dd("variable name: %.*s", (int) name_len, lowcase_buf);
 
     /* we fetch the variable itself */
 
@@ -420,98 +395,86 @@ ngx_http_lua_ffi_var_set(ngx_http_request_t *r, u_char *name_data,
 
     v = ngx_hash_find(&cmcf->variables_hash, hash, lowcase_buf, name_len);
 
-    if (v)
-    {
-        if (!(v->flags & NGX_HTTP_VAR_CHANGEABLE))
-        {
+    if (v) {
+        if (!(v->flags & NGX_HTTP_VAR_CHANGEABLE)) {
             dd("variable not changeable");
-            *errlen =
-                ngx_snprintf(errbuf, *errlen, "variable \"%*s\" not changeable",
-                             name_len, lowcase_buf)
-                - errbuf;
+            *errlen = ngx_snprintf(errbuf, *errlen,
+                                   "variable \"%*s\" not changeable",
+                                   name_len, lowcase_buf)
+                      - errbuf;
             return NGX_ERROR;
         }
 
-        if (v->set_handler)
-        {
+        if (v->set_handler) {
+
             dd("set variables with set_handler");
 
-            if (value != NULL && value_len)
-            {
-                vv = ngx_palloc(r->pool,
-                                sizeof(ngx_http_variable_value_t) + value_len);
-                if (vv == NULL)
-                {
+            if (value != NULL && value_len) {
+                vv = ngx_palloc(r->pool, sizeof(ngx_http_variable_value_t)
+                                + value_len);
+                if (vv == NULL) {
                     goto nomem;
                 }
 
-                p = (u_char *)vv + sizeof(ngx_http_variable_value_t);
+                p = (u_char *) vv + sizeof(ngx_http_variable_value_t);
                 ngx_memcpy(p, value, value_len);
                 value = p;
-            }
-            else
-            {
+
+            } else {
                 vv = ngx_palloc(r->pool, sizeof(ngx_http_variable_value_t));
-                if (vv == NULL)
-                {
+                if (vv == NULL) {
                     goto nomem;
                 }
             }
 
-            if (value == NULL)
-            {
-                vv->valid        = 0;
-                vv->not_found    = 1;
+            if (value == NULL) {
+                vv->valid = 0;
+                vv->not_found = 1;
                 vv->no_cacheable = 0;
-                vv->data         = NULL;
-                vv->len          = 0;
-            }
-            else
-            {
-                vv->valid        = 1;
-                vv->not_found    = 0;
+                vv->data = NULL;
+                vv->len = 0;
+
+            } else {
+                vv->valid = 1;
+                vv->not_found = 0;
                 vv->no_cacheable = 0;
 
                 vv->data = value;
-                vv->len  = value_len;
+                vv->len = value_len;
             }
 
             v->set_handler(r, vv, v->data);
             return NGX_OK;
         }
 
-        if (v->flags & NGX_HTTP_VAR_INDEXED)
-        {
+        if (v->flags & NGX_HTTP_VAR_INDEXED) {
             vv = &r->variables[v->index];
 
             dd("set indexed variable");
 
-            if (value == NULL)
-            {
-                vv->valid        = 0;
-                vv->not_found    = 1;
+            if (value == NULL) {
+                vv->valid = 0;
+                vv->not_found = 1;
                 vv->no_cacheable = 0;
 
                 vv->data = NULL;
-                vv->len  = 0;
-            }
-            else
-            {
+                vv->len = 0;
+
+            } else {
                 p = ngx_palloc(r->pool, value_len);
-                if (p == NULL)
-                {
+                if (p == NULL) {
                     goto nomem;
                 }
 
                 ngx_memcpy(p, value, value_len);
                 value = p;
 
-                vv->valid        = 1;
-                vv->not_found    = 0;
+                vv->valid = 1;
+                vv->not_found = 0;
                 vv->no_cacheable = 0;
 
                 vv->data = value;
-                vv->len  = value_len;
+                vv->len = value_len;
             }
 
             return NGX_OK;
@@ -519,8 +482,7 @@ ngx_http_lua_ffi_var_set(ngx_http_request_t *r, u_char *name_data,
 
         *errlen = ngx_snprintf(errbuf, *errlen,
                                "variable \"%*s\" cannot be assigned "
-                               "a value",
-                               name_len, lowcase_buf)
+                               "a value", name_len, lowcase_buf)
                   - errbuf;
         return NGX_ERROR;
     }

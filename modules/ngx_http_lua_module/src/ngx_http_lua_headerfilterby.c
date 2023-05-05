@@ -61,32 +61,31 @@ ngx_http_lua_header_filter_by_lua_env(lua_State *L, ngx_http_request_t *r)
     ngx_http_lua_create_new_globals_table(L, 0 /* narr */, 1 /* nrec */);
 
     /*  {{{ make new env inheriting main thread's globals table */
-    lua_createtable(L, 0, 1 /* nrec */); /* the metatable for the new env */
+    lua_createtable(L, 0, 1 /* nrec */);   /* the metatable for the new env */
     ngx_http_lua_get_globals_table(L);
     lua_setfield(L, -2, "__index");
-    lua_setmetatable(L, -2); /*  setmetatable({}, {__index = _G}) */
+    lua_setmetatable(L, -2);    /*  setmetatable({}, {__index = _G}) */
     /*  }}} */
 
-    lua_setfenv(L, -2); /*  set new running env for the code closure */
-#endif                  /* OPENRESTY_LUAJIT */
+    lua_setfenv(L, -2);    /*  set new running env for the code closure */
+#endif /* OPENRESTY_LUAJIT */
 }
 
 
 ngx_int_t
 ngx_http_lua_header_filter_by_chunk(lua_State *L, ngx_http_request_t *r)
 {
-    int       old_exit_code = 0;
-    ngx_int_t rc;
-    u_char   *err_msg;
-    size_t    len;
+    int              old_exit_code = 0;
+    ngx_int_t        rc;
+    u_char          *err_msg;
+    size_t           len;
 #if (NGX_PCRE)
-    ngx_pool_t *old_pool;
+    ngx_pool_t      *old_pool;
 #endif
-    ngx_http_lua_ctx_t *ctx;
+    ngx_http_lua_ctx_t          *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
-    if (ctx->exited)
-    {
+    if (ctx->exited) {
         old_exit_code = ctx->exit_code;
     }
 
@@ -99,29 +98,27 @@ ngx_http_lua_header_filter_by_chunk(lua_State *L, ngx_http_request_t *r)
 #endif
 
     lua_pushcfunction(L, ngx_http_lua_traceback);
-    lua_insert(L, 1); /* put it under chunk and args */
+    lua_insert(L, 1);  /* put it under chunk and args */
 
     /*  protected call user code */
     rc = lua_pcall(L, 0, 1, 1);
 
-    lua_remove(L, 1); /* remove traceback function */
+    lua_remove(L, 1);  /* remove traceback function */
 
 #if (NGX_PCRE)
     /* XXX: work-around to nginx regex subsystem */
     ngx_http_lua_pcre_malloc_done(old_pool);
 #endif
 
-    dd("rc == %d", (int)rc);
+    dd("rc == %d", (int) rc);
 
-    if (rc != 0)
-    {
+    if (rc != 0) {
         /*  error occurred when running loaded code */
-        err_msg = (u_char *)lua_tolstring(L, -1, &len);
+        err_msg = (u_char *) lua_tolstring(L, -1, &len);
 
-        if (err_msg == NULL)
-        {
-            err_msg = (u_char *)"unknown reason";
-            len     = sizeof("unknown reason") - 1;
+        if (err_msg == NULL) {
+            err_msg = (u_char *) "unknown reason";
+            len = sizeof("unknown reason") - 1;
         }
 
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
@@ -132,27 +129,24 @@ ngx_http_lua_header_filter_by_chunk(lua_State *L, ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-    dd("exited: %d, exit code: %d, old exit code: %d", (int)ctx->exited,
-       (int)ctx->exit_code, (int)old_exit_code);
+    dd("exited: %d, exit code: %d, old exit code: %d",
+       (int) ctx->exited, (int) ctx->exit_code, (int) old_exit_code);
 
 #if 1
     /*  clear Lua stack */
     lua_settop(L, 0);
 #endif
 
-    if (ctx->exited && ctx->exit_code != old_exit_code)
-    {
-        if (ctx->exit_code == NGX_ERROR)
-        {
+    if (ctx->exited && ctx->exit_code != old_exit_code) {
+        if (ctx->exit_code == NGX_ERROR) {
             return NGX_ERROR;
         }
 
-        dd("finalize request with %d", (int)ctx->exit_code);
+        dd("finalize request with %d", (int) ctx->exit_code);
 
         rc = ngx_http_filter_finalize_request(r, &ngx_http_lua_module,
                                               ctx->exit_code);
-        if (rc == NGX_ERROR || rc == NGX_AGAIN)
-        {
+        if (rc == NGX_ERROR || rc == NGX_AGAIN) {
             return rc;
         }
 
@@ -166,21 +160,21 @@ ngx_http_lua_header_filter_by_chunk(lua_State *L, ngx_http_request_t *r)
 ngx_int_t
 ngx_http_lua_header_filter_inline(ngx_http_request_t *r)
 {
-    lua_State               *L;
-    ngx_int_t                rc;
-    ngx_http_lua_loc_conf_t *llcf;
+    lua_State                   *L;
+    ngx_int_t                    rc;
+    ngx_http_lua_loc_conf_t     *llcf;
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
 
     L = ngx_http_lua_get_lua_vm(r, NULL);
 
     /*  load Lua inline script (w/ cache) sp = 1 */
-    rc = ngx_http_lua_cache_loadbuffer(
-        r->connection->log, L, llcf->header_filter_src.value.data,
-        llcf->header_filter_src.value.len, llcf->header_filter_src_key,
-        "=header_filter_by_lua");
-    if (rc != NGX_OK)
-    {
+    rc = ngx_http_lua_cache_loadbuffer(r->connection->log, L,
+                                       llcf->header_filter_src.value.data,
+                                       llcf->header_filter_src.value.len,
+                                       llcf->header_filter_src_key,
+                                       "=header_filter_by_lua");
+    if (rc != NGX_OK) {
         return NGX_ERROR;
     }
 
@@ -193,11 +187,11 @@ ngx_http_lua_header_filter_inline(ngx_http_request_t *r)
 ngx_int_t
 ngx_http_lua_header_filter_file(ngx_http_request_t *r)
 {
-    lua_State               *L;
-    ngx_int_t                rc;
-    u_char                  *script_path;
-    ngx_http_lua_loc_conf_t *llcf;
-    ngx_str_t                eval_src;
+    lua_State                       *L;
+    ngx_int_t                        rc;
+    u_char                          *script_path;
+    ngx_http_lua_loc_conf_t         *llcf;
+    ngx_str_t                        eval_src;
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
 
@@ -208,11 +202,10 @@ ngx_http_lua_header_filter_file(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-    script_path =
-        ngx_http_lua_rebase_path(r->pool, eval_src.data, eval_src.len);
+    script_path = ngx_http_lua_rebase_path(r->pool, eval_src.data,
+                                           eval_src.len);
 
-    if (script_path == NULL)
-    {
+    if (script_path == NULL) {
         return NGX_ERROR;
     }
 
@@ -221,8 +214,7 @@ ngx_http_lua_header_filter_file(ngx_http_request_t *r)
     /*  load Lua script file (w/ cache)        sp = 1 */
     rc = ngx_http_lua_cache_loadfile(r->connection->log, L, script_path,
                                      llcf->header_filter_src_key);
-    if (rc != NGX_OK)
-    {
+    if (rc != NGX_OK) {
         return NGX_ERROR;
     }
 
@@ -236,24 +228,22 @@ ngx_http_lua_header_filter_file(ngx_http_request_t *r)
 static ngx_int_t
 ngx_http_lua_header_filter(ngx_http_request_t *r)
 {
-    ngx_http_lua_loc_conf_t *llcf;
-    ngx_http_lua_ctx_t      *ctx;
-    ngx_int_t                rc;
-    ngx_http_cleanup_t      *cln;
-    uint16_t                 old_context;
+    ngx_http_lua_loc_conf_t     *llcf;
+    ngx_http_lua_ctx_t          *ctx;
+    ngx_int_t                    rc;
+    ngx_http_cleanup_t          *cln;
+    uint16_t                     old_context;
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "lua header filter for user lua code, uri \"%V\"", &r->uri);
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
 
-    if (llcf->body_filter_handler)
-    {
+    if (llcf->body_filter_handler) {
         r->filter_need_in_memory = 1;
     }
 
-    if (llcf->header_filter_handler == NULL)
-    {
+    if (llcf->header_filter_handler == NULL) {
         dd("no header filter handler found");
         return ngx_http_next_header_filter(r);
     }
@@ -262,29 +252,25 @@ ngx_http_lua_header_filter(ngx_http_request_t *r)
 
     dd("ctx = %p", ctx);
 
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         ctx = ngx_http_lua_create_ctx(r);
-        if (ctx == NULL)
-        {
+        if (ctx == NULL) {
             return NGX_ERROR;
         }
     }
 
-    if (ctx->cleanup == NULL)
-    {
+    if (ctx->cleanup == NULL) {
         cln = ngx_http_cleanup_add(r, 0);
-        if (cln == NULL)
-        {
+        if (cln == NULL) {
             return NGX_ERROR;
         }
 
         cln->handler = ngx_http_lua_request_cleanup_handler;
-        cln->data    = ctx;
+        cln->data = ctx;
         ctx->cleanup = &cln->handler;
     }
 
-    old_context  = ctx->context;
+    old_context = ctx->context;
     ctx->context = NGX_HTTP_LUA_CONTEXT_HEADER_FILTER;
 
     dd("calling header filter handler");
@@ -292,13 +278,11 @@ ngx_http_lua_header_filter(ngx_http_request_t *r)
 
     ctx->context = old_context;
 
-    if (rc == NGX_DECLINED)
-    {
+    if (rc == NGX_DECLINED) {
         return NGX_OK;
     }
 
-    if (rc == NGX_AGAIN || rc == NGX_ERROR)
-    {
+    if (rc == NGX_AGAIN || rc == NGX_ERROR) {
         return rc;
     }
 
@@ -311,7 +295,7 @@ ngx_http_lua_header_filter_init(void)
 {
     dd("calling header filter init");
     ngx_http_next_header_filter = ngx_http_top_header_filter;
-    ngx_http_top_header_filter  = ngx_http_lua_header_filter;
+    ngx_http_top_header_filter = ngx_http_lua_header_filter;
 
     return NGX_OK;
 }
