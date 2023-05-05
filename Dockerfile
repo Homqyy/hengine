@@ -12,6 +12,7 @@ RUN bash ./configure \
     --with-http_sub_module \
     --with-stream_ssl_module \
     --with-stream \
+    --with-stream_sni \
     --add-module=./modules/ngx_http_proxy_connect_module \
     && make && make install
 

@@ -5,6 +5,20 @@
 - 基于“Tengine”的`v2.3.3`
 - 对应的镜像为：[homqyy/hengine](https://hub.docker.com/r/homqyy/hengine)
 
+### 新增特性
+
+#### Proxy Connect Module 支持Basic认证
+
+[ngx_http_proxy_connect_module_cn.md](./docs/modules/ngx_http_proxy_connect_module_cn.md)
+
+#### 协议转换
+
+可以在`tcp`、`udp`和`udp+kcp`之间任意转换协议
+
+#### 支持KCP代理
+
+手册暂未提供
+
 ## 使用
 
 1. 配置：`./configure --prefix=/path/to/install/`
