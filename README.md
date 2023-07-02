@@ -1,4 +1,5 @@
-# Hengine
+Hengine
+=======
 
 ## 介绍
 
@@ -25,6 +26,11 @@
 2. 编译：`make -j`
 3. 安装：`make install`
 4. 运行：`/path/to/install/sbin/nginx`
+
+## 计划
+
+- [ ] kcp测试脚本
+- [ ] 补丁：Proxy Connect + SSL 功能异常
 
 ## 目录结构
 
