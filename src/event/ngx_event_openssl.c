@@ -2385,6 +2385,24 @@ ngx_ssl_try_early_data(ngx_connection_t *c)
         return NGX_AGAIN;
     }
 
+#if (NGX_SSL && NGX_SSL_ASYNC)
+    if (c->async_enable && sslerr == SSL_ERROR_WANT_ASYNC)
+    {
+        c->async->handler = ngx_ssl_handshake_async_handler;
+        c->read->saved_handler = c->read->handler;
+        c->read->handler = ngx_ssl_empty_handler;
+
+        ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0,
+                       "SSL ASYNC WANT recieved: \"%s\"", __func__);
+
+        if (ngx_ssl_async_process_fds(c) == NGX_ERROR) {
+            return NGX_ERROR;
+        }
+
+        return NGX_AGAIN;
+    }
+#endif
+
     err = (sslerr == SSL_ERROR_SYSCALL) ? ngx_errno : 0;
 
     c->ssl->no_wait_shutdown = 1;
@@ -3710,9 +3728,21 @@ ngx_ssl_shutdown(ngx_connection_t *c)
         ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "SSL_shutdown: %d", n);
 
         if (n == 1) {
+#if (NGX_SSL && NGX_SSL_ASYNC)
+                    we want to carry on and close the SSL connection
+                    anyway. */
+                ngx_ssl_async_process_fds(c);
+                if (ngx_del_async_conn) {
+                    if (c->num_async_fds) {
+                        ngx_del_async_conn(c, NGX_DISABLE_EVENT);
+                        c->num_async_fds--;
+                    }
+                }
+                ngx_del_conn(c, NGX_DISABLE_EVENT);
+            }
+#endif
             goto done;
         }
-
         if (n == 0 && tries-- > 1) {
             continue;
         }
@@ -3758,25 +3788,6 @@ ngx_ssl_shutdown(ngx_connection_t *c)
             return NGX_AGAIN;
         }
 
-        if (sslerr == SSL_ERROR_ZERO_RETURN || ERR_peek_error() == 0) {
-#if (NGX_SSL && NGX_SSL_ASYNC)
-            if (c->async_enable) {
-                /* Ignore errors from ngx_ssl_async_process_fds as
-                   we want to carry on and close the SSL connection
-                   anyway. */
-                ngx_ssl_async_process_fds(c);
-                if (ngx_del_async_conn) {
-                    if (c->num_async_fds) {
-                        ngx_del_async_conn(c, NGX_DISABLE_EVENT);
-                        c->num_async_fds--;
-                    }
-                }
-                ngx_del_conn(c, NGX_DISABLE_EVENT);
-            }
-#endif
-            goto done;
-        }
-
 #if (NGX_SSL && NGX_SSL_ASYNC)
     if (c->async_enable) {
         if (sslerr == SSL_ERROR_WANT_ASYNC) {
@@ -3807,6 +3818,10 @@ ngx_ssl_shutdown(ngx_connection_t *c)
         ngx_del_conn(c, NGX_DISABLE_EVENT);
     }
 #endif
+
+        if (sslerr == SSL_ERROR_ZERO_RETURN || ERR_peek_error() == 0) {
+            goto done;
+        }
 
         err = (sslerr == SSL_ERROR_SYSCALL) ? ngx_errno : 0;
 
