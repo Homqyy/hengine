@@ -3729,6 +3729,8 @@ ngx_ssl_shutdown(ngx_connection_t *c)
 
         if (n == 1) {
 #if (NGX_SSL && NGX_SSL_ASYNC)
+            if (c->async_enable) {
+                /* Ignore errors from ngx_ssl_async_process_fds as
                     we want to carry on and close the SSL connection
                     anyway. */
                 ngx_ssl_async_process_fds(c);
@@ -3743,6 +3745,7 @@ ngx_ssl_shutdown(ngx_connection_t *c)
 #endif
             goto done;
         }
+
         if (n == 0 && tries-- > 1) {
             continue;
         }
