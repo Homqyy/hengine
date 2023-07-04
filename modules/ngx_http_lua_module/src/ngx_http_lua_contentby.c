@@ -116,9 +116,12 @@ ngx_http_lua_content_by_chunk(lua_State *L, ngx_http_request_t *r)
         }
 
 #if (T_NGX_XQUIC)
+        }
+#endif
 
 #if (NGX_HTTP_V2)
         }
+#endif
 
     } else {
         r->read_event_handler = ngx_http_block_reading;
