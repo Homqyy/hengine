@@ -2,7 +2,7 @@ name: build tengine
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, update/* ]
   pull_request:
 
 jobs:

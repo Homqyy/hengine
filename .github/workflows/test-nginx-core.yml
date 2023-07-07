@@ -2,7 +2,7 @@ name: test nginx core
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, update/* ]
   pull_request:
     branches: [ master ]
 
