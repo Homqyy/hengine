@@ -130,6 +130,7 @@ STREAM_GEOIP=NO
 STREAM_MAP=YES
 STREAM_SPLIT_CLIENTS=YES
 STREAM_RETURN=YES
+STREAM_SET=YES
 STREAM_UPSTREAM_HASH=YES
 STREAM_UPSTREAM_LEAST_CONN=YES
 STREAM_UPSTREAM_RANDOM=YES
@@ -169,6 +170,13 @@ LUAJIT_INC=$LUAJIT_INC
 LUAJIT_LIB=$LUAJIT_LIB
 LUA_INC=$LUA_INC
 LUA_LIB=$LUA_LIB
+
+XUDP_INC=$XUDP_INC
+XUDP_LIB=$XUDP_LIB
+XQUIC_XDP_INC=$XQUIC_XDP_INC
+
+XQUIC_INC=$XQUIC_INC
+XQUIC_LIB=$XQUIC_LIB
 
 USE_LIBXSLT=NO
 USE_LIBGD=NO
@@ -310,6 +318,13 @@ $0: warning: the \"--with-ipv6\" option is deprecated"
         --with-perl_modules_path=*)      NGX_PERL_MODULES="$value"  ;;
         --with-perl=*)                   NGX_PERL="$value"          ;;
 
+        --with-xudp-inc=*)               XUDP_INC="$value"          ;;
+        --with-xudp-lib=*)               XUDP_LIB="$value"          ;;
+        --with-xquic_xdp-inc=*)          XQUIC_XDP_INC="$value"     ;;
+
+        --with-xquic-inc=*)              XQUIC_INC="$value"         ;;
+        --with-xquic-lib=*)              XQUIC_LIB="$value"         ;;
+
         # LUA
         --with-http_lua_module)          HTTP_LUA=YES               ;;
         --with-luajit-inc=*)             LUAJIT_INC="$value"        ;;
@@ -358,6 +373,7 @@ use the \"--with-mail_ssl_module\" option instead"
         --without-stream_split_clients_module)
                                          STREAM_SPLIT_CLIENTS=NO    ;;
         --without-stream_return_module)  STREAM_RETURN=NO           ;;
+        --without-stream_set_module)     STREAM_SET=NO              ;;
         --without-stream_upstream_hash_module)
                                          STREAM_UPSTREAM_HASH=NO    ;;
         --without-stream_upstream_least_conn_module)
@@ -577,6 +593,10 @@ cat << END
   --without-mail_pop3_module         disable ngx_mail_pop3_module
   --without-mail_imap_module         disable ngx_mail_imap_module
   --without-mail_smtp_module         disable ngx_mail_smtp_module
+
+  --with-xquic-inc=PATH              set XQUIC headers path
+  --with-xquic-lib=PATH              set XQUIC library path (where libxquic.so is located)
+  --with-xquic-link=PATH             set XQUIC headers link path
 
   --with-stream                      enable TCP/UDP proxy module
   --with-stream=dynamic              enable dynamic TCP/UDP proxy module
