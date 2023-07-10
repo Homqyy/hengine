@@ -25,3 +25,4 @@
 - [x] 补丁：Proxy Connect + SSL 功能异常
     - [#1794](https://github.com/alibaba/tengine/issues/1794)
     - [#1797](https://github.com/alibaba/tengine/pull/1797/files)
+- [ ] 自动上传构建docker镜像`homqyy/hengine`
