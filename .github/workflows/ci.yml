@@ -2,7 +2,7 @@ name: test tengine
 
 on:
   push:
-    branches: [ master, update/* ]
+    branches: [ master, update/*, actions/* ]
   pull_request:
     branches: [ master ]
 
