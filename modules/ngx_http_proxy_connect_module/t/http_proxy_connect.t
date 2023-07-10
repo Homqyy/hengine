@@ -17,9 +17,13 @@ BEGIN { use FindBin; chdir($FindBin::Bin); }
 
 use lib 'lib';
 use Test::Nginx;
+
+###############################################################################
+
+select STDERR; $| = 1;
 select STDOUT; $| = 1;
 
-my $t = Test::Nginx->new()->has(qw/http proxy/)->plan(26);
+my $t = Test::Nginx->new()->has(qw/http proxy/)->plan(27);
 
 ###############################################################################
 
@@ -43,7 +47,7 @@ my %aroute_map = (
     'get-default-response.com' => [[300, "127.0.0.1"]],
     'set-response-header.com' => [[300, "127.0.0.1"]],
     'set-response-status.com' => [[300, "127.0.0.1"]],
-    'auth.example.com' => [[300, "127.0.0.1"]],
+    'skip-this-server.com' => [[300, "127.0.0.1"]],
 );
 
 ###############################################################################
@@ -123,39 +127,11 @@ http {
             root %%TESTDIR%%/;
         }
     }
-
-    server {
-        listen 127.0.0.1:8080;
-
-        server_name auth.example.com;
-
-        proxy_connect;
-        proxy_connect_auth  on;
-        proxy_connect_allow 443 80 8081;
-
-        auth_basic              web_proxy;
-        auth_basic_user_file    user_list.htpasswd;
-    }
-
-    server {
-        listen       127.0.0.1:8080;
-        server_name  forbidden.example.com;
-
-        # It will forbid CONNECT request without proxy_connect command enabled.
-
-        return 200;
-    }
 }
 
 EOF
 
-my $user_list = <<'EOF';
-# password is '123456'
-user:$apr1$1Jt/1uYP$bSBtyBO3gRdxsaTXe20td0
-EOF
-
 $t->write_file_expand('nginx.conf', $nginx_conf);
-$t->write_file('user_list.htpasswd', $user_list);
 
 system('chmod', 'o+rx', $t->testdir()); # solve Permission denied
 
@@ -181,13 +157,6 @@ like(http_connect_request('www.no-dns-reply.com', '80', '/'), qr/502/, '200 Conn
 like(http_connect_request('127.0.0.1', '9999', '/'), qr/403/, '200 Connection Established not allowed port');
 like(http_get('/'), qr/backend server/, 'Get method: proxy_pass');
 like(http_get('/hello'), qr/world/, 'Get method: return 200');
-like(http_connect_request('forbidden.example.com', '8080', '/'), qr/405 Not Allowed/, 'forbid CONNECT request without proxy_connect command enabled');
-
-# proxy auth
-like(http_connect_request('auth.example.com', '8081', '/'), qr/407 Proxy Authentication Required/, 'must to carry Proxy-Authorization');
-like(http_connect_request('auth.example.com', '8081', '/'), qr/Proxy-Authenticate: Basic realm="web_proxy"/, 'Basic realm');
-like(http_connect_request_carry_authorization('auth.example.com', '8081', '/', "Basic dXNlcjoxMjM0NTY="), qr/backend server/, 'carry valid Proxy-Authorization');
-like(http_connect_request_carry_authorization('auth.example.com', '8081', '/', "Basic abcd"), qr/401 Unauthorized/, 'carry invalid Proxy-Authorization');
 
 # proxy_remote_address directive supports dynamic domain resolving.
 like(http_connect_request('proxy-remote-address-resolve-domain.com', '8081', '/'),
@@ -199,11 +168,71 @@ if ($test_enable_rewrite_phase) {
     like(http_connect_request('bind.com', '8081', '/'), qr/backend server: addr:127.0.0.1 port:8083/, 'set local address and remote address');
 }
 
-
 # test $connect_host, $connect_port
 my $log = http_get('/connect.log');
 like($log, qr/CONNECT 127\.0\.0\.1:8081.*var:127\.0\.0\.1-8081-127\.0\.0\.1:8081/, '$connect_host, $connect_port, $connect_addr');
 like($log, qr/CONNECT www\.no-dns-reply\.com:80.*var:www\.no-dns-reply\.com-80--/, 'dns resolver fail');
+
+$t->stop();
+
+###############################################################################
+
+$t->write_file_expand('nginx.conf', <<'EOF');
+
+%%TEST_GLOBALS%%
+
+daemon         off;
+
+events {
+}
+
+http {
+    %%TEST_GLOBALS_HTTP%%
+
+    #LUA_PACKAGE_PATH
+    # If you build nginx with lua-nginx-module, please enable           # directive "lua_package_path". For more details, see:              #  https://github.com/openresty/lua-nginx-module#installation
+    #lua_package_path "/path/to/lib/lua/?.lua;;";
+
+    access_log off;
+
+    server {
+        listen  127.0.0.1:8081;
+        access_log off;
+        location / {
+            return 200 "backend server: addr:$remote_addr port:$server_port host:$host\n";
+        }
+    }
+
+    server {
+        listen 127.0.0.1:8080;
+
+        proxy_connect;
+        proxy_connect_auth  on;
+        proxy_connect_allow 8081;
+
+        auth_basic              web_proxy;
+        auth_basic_user_file    user_list.htpasswd;
+    }
+}
+
+EOF
+
+my $user_list = <<'EOF';
+# password is '123456'
+user:$apr1$1Jt/1uYP$bSBtyBO3gRdxsaTXe20td0
+EOF
+
+$t->write_file('user_list.htpasswd', $user_list);
+
+system('chmod', 'o+rx', $t->testdir()); # solve Permission denied
+
+$t->run();
+
+# proxy auth
+like(http_connect_request('127.0.0.1', '8081', '/'), qr/407 Proxy Authentication Required/, 'must to carry Proxy-Authorization');
+like(http_connect_request('127.0.0.1', '8081', '/'), qr/Proxy-Authenticate: Basic realm="web_proxy"/, 'Basic realm');
+like(http_connect_request_carry_authorization('127.0.0.1', '8081', '/', "Basic dXNlcjoxMjM0NTY="), qr/backend server/, 'carry valid Proxy-Authorization');
+like(http_connect_request_carry_authorization('127.0.0.1', '8081', '/', "Basic abcd"), qr/401 Unauthorized/, 'carry invalid Proxy-Authorization');
 
 $t->stop();
 
@@ -391,6 +420,47 @@ http {
 
     access_log off;
 
+    server {
+        listen       127.0.0.1:8080;
+        server_name  forbidden.example.com;
+
+        # It will forbid CONNECT request without proxy_connect command enabled.
+
+        return 200;
+    }
+}
+
+EOF
+
+# test proxy_connect_response directive
+
+$t->run();
+
+like(http_connect_request('forbidden.example.com', '8080', '/'), qr/405 Not Allowed/, 'forbid CONNECT request without proxy_connect command enabled');
+
+$t->stop();
+
+
+###############################################################################
+
+$t->write_file_expand('nginx.conf', <<'EOF');
+
+%%TEST_GLOBALS%%
+
+daemon         off;
+
+events {
+}
+
+http {
+    %%TEST_GLOBALS_HTTP%%
+
+    #LUA_PACKAGE_PATH
+    # If you build nginx with lua-nginx-module, please enable           # directive "lua_package_path". For more details, see:              #  https://github.com/openresty/lua-nginx-module#installation
+    #lua_package_path "/path/to/lib/lua/?.lua;;";
+
+    access_log off;
+
     resolver 127.0.0.1:%%PORT_8981_UDP%% ipv6=off;      # NOTE: cannot connect ipv6 address ::1 in mac os x.
 
     server {
@@ -407,6 +477,15 @@ http {
             return 200 "backend";
         }
     }
+
+    # test logic that CONNECT requests should skip ngx_http_set_virtual_server()
+    server {
+        listen       127.0.0.1:8080;
+        server_name  skip-this-server.com;
+        proxy_connect;
+        proxy_connect_allow all;
+        return 500;
+    }
 }
 
 EOF
@@ -417,6 +496,7 @@ $t->run();
 
 if ($test_enable_rewrite_phase) {
     like(http_connect_request('set-response-header.com', '8081', '/'), qr/X-Proxy-Connected-Addr: 127.0.0.1:8081\r/, 'added header "Foo: bar" to CONNECT response');
+    unlike(http_connect_request('skip-this-server.com', '8081', '/'), qr/500 Internal Server Error/, 'skip ngx_http_set_virtual_server()');
 }
 
 $t->stop();
