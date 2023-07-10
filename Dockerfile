@@ -16,10 +16,6 @@ RUN bash ./configure \
     --add-module=./modules/ngx_http_proxy_connect_module \
     && make && make install
 
-LABEL cn.homqyy.docker.title="hengine"
-LABEL cn.homqyy.docker.author="homqyy"
-LABEL cn.homqyy.docker.email="yilupiaoxuewhq@163.com"
-
 FROM centos:8
 
 # update yum repos
