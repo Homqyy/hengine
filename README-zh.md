@@ -26,3 +26,6 @@
     - [#1794](https://github.com/alibaba/tengine/issues/1794)
     - [#1797](https://github.com/alibaba/tengine/pull/1797/files)
 - [x] 自动上传构建docker镜像`homqyy/hengine`
+- [ ] 支持 arm64 镜像
+- [ ] 对 KCP 功能进行性能测试
+- [ ] 基于 README-zh.md 自动生成 README.md
