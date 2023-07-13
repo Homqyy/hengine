@@ -28,3 +28,6 @@ The manual is not yet available.
     - [#1794](https://github.com/alibaba/tengine/issues/1794)
     - [#1797](https://github.com/alibaba/tengine/pull/1797/files)
 - [x] Automatically upload and build the docker image `homqyy/hengine`
+- [ ] Support arm64 image
+- [ ] Test performance for kcp
+- [ ] Automatically genete README.md based on README-zh.md
